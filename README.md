@@ -19,9 +19,13 @@ These cmdlets contains operation used most such as: bois setting, syslog, snmp, 
 Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.0.0
 ```
 - Local installation
+
 1、Decompress the Huawei-iBMC-Cmdlets V1.0.zip software package to obtain the Huawei-iBMC-Cmdlets folder.
+
 2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory.
+
 3、Run the following command to install Huawei-iBMC-Cmdlets:
+
 ```powershell
 Import-Module Huawei-iBMC-Cmdlets -Force
 ```
