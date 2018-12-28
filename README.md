@@ -1,7 +1,7 @@
 # Huawei iBMC Cmdlets
 
-Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.
-These cmdlets contains operation used most such as: bois setting, syslog, snmp, network, power and etc.
+Huawei iBMC Cmdlets provide cmdlets to quick access iBMC Redfish devices.
+These cmdlets contains operation used most such as: bois setting, syslog, snmp, network, power, firmware update and etc.
 
 
 ## Requirements
