@@ -15,7 +15,7 @@ These cmdlets contains operation used most such as: bois setting, syslog, snmp, 
 
 - Online installation 
   ```powershell
-  Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.0.0
+  Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.0.1
   ```
 - Local installation
 
