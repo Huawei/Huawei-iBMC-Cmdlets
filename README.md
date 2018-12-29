@@ -10,7 +10,6 @@ These cmdlets contains operation used most such as: bois setting, syslog, snmp, 
 
 - [.Net Framework 4.5](http://www.microsoft.com/en-us/download/details.aspx?id=30653)
 
-- [WMF 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395)
 
 ## Install
 
