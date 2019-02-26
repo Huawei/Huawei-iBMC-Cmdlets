@@ -79,10 +79,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -104,7 +104,7 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER ServiceEnabled
 Indicates whether syslog is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER ServerIdentitySource
 Indicates the notification server host identifier.
@@ -180,6 +180,7 @@ Disconnect-iBMC
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set iBMC Syslog settings now"))
       $Path = "/Managers/$($RedfishSession.Id)/SyslogService"
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -207,10 +208,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -314,10 +315,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -345,7 +346,7 @@ Support integer value range: [0, 3]
 
 .PARAMETER Enabled
 Indicates Whether this server's syslog notification is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER Address
 Indicates the Notificate Server address.
@@ -446,6 +447,8 @@ Disconnect-iBMC
       $CompletePlayload = @{
         "SyslogServers" = $Members;
       }
+
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($CompletePlayload | ConvertTo-Json -Depth 5)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $CompletePlayload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -474,10 +477,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

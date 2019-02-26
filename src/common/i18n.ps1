@@ -18,6 +18,7 @@ $bundle = Data {
   FAIL_SP_RESET_SYSTEM = Failure: Failed to restart computer system.
   FAIL_SIGNAL_URI_REQUIRED = Failure: Signal Uri is required when upgrade firmware.
 
+  ERROR_ILLEGAL_THREAD_RETURN_COUNT = Error: Thread script should only return one element, check your code.
   ERROR_INVALID_CREDENTIALS = Error: Invalid credentials
   ERROR_PARAMETER_EMPTY = Error: parameter "{0}" should not be null or empty
   ERROR_PARAMETER_ILLEGAL = Error: parameter "{0}" is illegal, please check it
@@ -31,8 +32,16 @@ $bundle = Data {
   ERROR_NTP_MIN_GT_MAX = Error: Parameter "MaxPollingInterval" must be greater than or equal to "MinPollingInterval"
   ERROR_FILE_URI_NOT_SUPPORT = Error: File Uri "{0}" is not supported, file transfer protocols should be one of "{1}".
   ERROR_FILE_URI_ILLEGAL = Error: File Uri is illegal or not exists, please check it.
+  ERROR_FILE_NOT_LOCAL = Error: File Uri "{0}" is not a local file, please check it.
   ERROR_SIGNAL_FILE_EMPTY = Error: parameter "SignalFileUri" should not be null or empty.
   ERROR_ILLEGAL_ADDR = Error: Address "{0}" is illegal.
+  ERROR_ILLEGAL_BMC_FILE_URI = Error: BMC File Uri "{0}" is illegal, it should starts with "/tmp/".
+  ERROR_COPYBACK_SHOULD_BE_ENABLED = Error: To enabled SmarterCopyBack, CopyBack should be enabled first.
+  ERROR_VOLUMEID_MANDATORY = Error: When HotSpareType is Dedicated, VolumeId is mandatory.
+  ERROR_VOLUMEID_NOT_EXISTS = Error: Could not find volume with Id "{0}".
+  ERROR_STORAGE_ID_NOT_EXISTS = Error: Could not find storage with Id "{0}".
+  ERROR_EXPORT_TO_SAME_NFS = Error: Should not export to a same file for multiple server.
+  ERROR_INVAIL_SENSITIVE_STRING = Error: Parameter "{0}" should be a String or SecureString.
 '@
 }
 

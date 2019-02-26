@@ -67,10 +67,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -151,6 +151,7 @@ Disconnect-iBMC
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set iBMC Asset Tag now"))
       $Path = "/Systems/$($RedfishSession.Id)"
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json -Depth 5)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -174,10 +175,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

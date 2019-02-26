@@ -336,6 +336,9 @@ function Remove-EmptyValues {
         if ($value -is [array] -and $value.count -eq 0) {
           continue
         }
+        if ($value -is [hashtable] -and $value.count -eq 0) {
+          continue
+        }
         if ($value -is [string] -and $value -eq '') {
           continue
         }
@@ -420,7 +423,7 @@ function Copy-ObjectProperties ($Source, $Properties) {
 
 function Copy-ObjectExcludes ($Source, $excludes) {
   $Clone = New-Object PSObject
-  $Properties = $Source | Get-Member -MemberType NoteProperty | Select-Object -Expand Name
+  $Properties = $Source.psobject.properties.Name
   $Properties | ForEach-Object {
     if ($_ -notin $excludes) {
       $Clone | Add-Member -MemberType NoteProperty "$_" $Source."$_"
@@ -429,6 +432,72 @@ function Copy-ObjectExcludes ($Source, $excludes) {
   return $Clone
 }
 
+function Clear-OdataProperties {
+<#
+  Clear Odata Properties of redfish response
+#>
+  [CmdletBinding()]
+  param (
+    [psobject]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $Source
+  )
+  return Copy-ObjectExcludes $Source $BMC.OdataProperties
+}
+
+function Merge-OemProperties {
+<#
+  Merge Redfish Odata Oem properties to main body
+#>
+  [CmdletBinding()]
+  param (
+    [psobject]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $Source
+  )
+  # $Clone = $Source | Select-Object -Property * -ExcludeProperty Oem
+  # $Oem = $Source.Oem.Huawei
+  # $Properties = $Oem | Get-Member -MemberType NoteProperty | Select-Object -Expand Name
+  # $Properties | ForEach-Object {
+  #   $Clone | Add-Member -MemberType NoteProperty $_ $Oem."$_"
+  # }
+  # return $Clone
+  if ($Source.Oem.Huawei) {
+    return Merge-NestProperties $Source @('Oem', 'huawei')
+  }
+
+  return $Source
+}
+
+function Merge-NestProperties {
+<#
+  Merge Redfish Odata Oem properties to main body
+#>
+  [CmdletBinding()]
+  param (
+    [psobject]
+    [parameter(Mandatory = $true)]
+    $Source,
+
+    [String[]]
+    [parameter(Mandatory = $true)]
+    $NestKeys
+  )
+  $Clone = $Source | Select-Object -Property * -ExcludeProperty $NestKeys[0]
+
+  $Nest = $Source
+  for ($idx = 0; $idx -lt $NestKeys.Length; $idx++) {
+    $key = $NestKeys[$idx]
+    $Nest = $Nest."$key"
+  }
+
+  # $Logger.Info("Nest is $Nest")
+  $Properties = $Nest.psobject.properties.Name
+  $Properties | ForEach-Object {
+    $Clone | Add-Member -MemberType NoteProperty $_ $Nest."$_"
+  }
+  return $Clone
+}
 
 function Resolve-EnumValues {
   [CmdletBinding()]
@@ -446,7 +515,11 @@ function Resolve-EnumValues {
       elseif ($value -is [Array]) {
         $Converted = New-Object System.Collections.ArrayList
         $value | ForEach-Object {
-          [Void] $Converted.Add($_.toString())
+          if ($_ -is [Enum]) {
+            [Void] $Converted.Add($_.toString())
+          } else {
+            [Void] $Converted.Add($_)
+          }
         }
         [Void] $hash.Add($key, $Converted)
       }
@@ -481,8 +554,120 @@ function Protect-NetworkUriUserInfo {
     if($NetworkUri.UserInfo.Length -gt 0) {
       return $NetworkUri.AbsoluteUri -replace $NetworkUri.UserInfo, "***:***"
     }
-    return $NetworkUri
+    return $NetworkPath
   } catch {
     return $NetworkPath
   }
 }
+
+function Resolve-NetworkUriSchema {
+  [CmdletBinding()]
+  param (
+    [string] $NetworkPath
+  )
+  try {
+    $NetworkUri = New-Object System.Uri($NetworkPath)
+    $Schema = $NetworkUri.Scheme
+    if($NetworkPath.StartsWith($Schema, "CurrentCultureIgnoreCase")) {
+      return "$($Schema.ToLower())$($NetworkPath.Substring($Schema.Length))"
+    }
+    return $NetworkPath
+  } catch {
+    return $NetworkPath
+  }
+}
+
+function Update-SessionAddress {
+  [CmdletBinding()]
+  param (
+    [RedfishSession] [parameter(Mandatory = $true)] $Session,
+    [PSObject] [parameter(Mandatory = $true)] $Target
+  )
+
+  $Clone = New-Object PSObject -Property @{
+    Host    = $Session.Address;
+  }
+
+  if ($null -ne $Target) {
+    $Properties = $Target.psobject.properties.Name
+    $Properties | ForEach-Object {
+      $Clone | Add-Member -MemberType NoteProperty "$_" $Target."$_"
+    }
+  }
+
+  # $Logger.info("return: $($Clone.psobject.properties.Name)")
+  # $Logger.info("return: $($Clone.Host)")
+  return $Clone
+}
+
+
+function Close-Pool ($pool) {
+  if ($null -ne $pool) {
+    $pool.close()
+  }
+}
+
+
+function Assert-NetworkUriInSchema ($RedfishSession, $FilePath, $SupportSchema) {
+  # iBMC local storage protocol handle
+  $IsBMCFileProtocol = ($FilePath.StartsWith("file:///tmp", "CurrentCultureIgnoreCase") `
+                          -or $FilePath.StartsWith("/tmp", "CurrentCultureIgnoreCase"))
+  if ($IsBMCFileProtocol -and 'file' -in $SupportSchema) {
+    return $FilePath
+  }
+
+
+  $SupportSchemaString = $SupportSchema -join ", "
+  try {
+    $ImageFileUri = New-Object System.Uri($FilePath)
+  } catch {
+    throw $(Get-i18n ERROR_FILE_URI_ILLEGAL)
+  }
+
+  $SecureFileUri = Protect-NetworkUriUserInfo $FilePath
+  if ($ImageFileUri.Scheme -notin $SupportSchema) {
+    $Logger.warn($(Trace-Session $RedfishSession "File $SecureFileUri is not in support schema: $SupportSchemaString"))
+    throw $([string]::Format($(Get-i18n ERROR_FILE_URI_NOT_SUPPORT), $ImageFileUri, $SupportSchemaString))
+  }
+
+  return Resolve-NetworkUriSchema $FilePath
+}
+
+
+function ConvertTo-PlainString {
+  [CmdletBinding()]
+  param (
+    [System.Object] [parameter(Mandatory = $true)] $SensitiveString,
+    [System.String] [parameter(Mandatory = $true)] $ParameterName
+  )
+
+  # if ($SensitiveString -isnot [SecureString] -and $SensitiveString -isnot [String]) {
+  #   throw $([string]::Format($(Get-i18n ERROR_INVAIL_SENSITIVE_STRING), $ParameterName))
+  # }
+
+  $PlainPasswd = $SensitiveString.ToString()
+  if ($SensitiveString -is [SecureString]) {
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SensitiveString)
+    $PlainPasswd = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    return $PlainPasswd
+  }
+
+  return $PlainPasswd
+}
+
+function Assert-IsSensitiveString {
+  [CmdletBinding()]
+  param (
+    [System.Object[]] [parameter(Mandatory = $true)] $SensitiveStringList,
+    [System.String] [parameter(Mandatory = $true)] $ParameterName
+  )
+
+  for ($idx=0; $idx -lt $SensitiveStringList.Count; $idx++) {
+    $SensitiveString = $SensitiveStringList[$idx]
+    if ($SensitiveString -isnot [SecureString] -and $SensitiveString -isnot [String]) {
+      throw $([string]::Format($(Get-i18n ERROR_INVAIL_SENSITIVE_STRING), $ParameterName))
+    }
+  }
+
+}
+

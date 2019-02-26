@@ -1,13 +1,15 @@
 <# NOTE: iBMC Service module Cmdlets #>
 
-function Get-iBMCService {
+function Get-iBMCServices {
 <#
 .SYNOPSIS
 Query information about the services and ports supported by the iBMC.
 
 .DESCRIPTION
 Query information about the services and ports supported by the iBMC.
-Support Services: "HTTP", "HTTPS", "SNMP", "VirtualMedia", "IPMI", "SSH", "KVMIP", "VNC
+Support Services:
+  "HTTP", "HTTPS", "SNMP", "VirtualMedia",
+  "IPMI", "SSH", "KVMIP", "VNC", "Video", "NAT", "SSDP"
 
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
@@ -22,17 +24,20 @@ In case of an error or warning, exception will be returned.
 
 PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> $Services = Get-iBMCService $session
+PS C:\> $Services = Get-iBMCServices $session
 PS C:\> $Services
 
-HTTP         : @{ProtocolEnabled=False; Port=80}
-HTTPS        : @{ProtocolEnabled=True; Port=443}
-SNMP         : @{ProtocolEnabled=True; Port=161}
-VirtualMedia : @{ProtocolEnabled=True; Port=8208}
-IPMI         : @{ProtocolEnabled=True; Port=623}
-SSH          : @{ProtocolEnabled=True; Port=22}
-KVMIP        : @{ProtocolEnabled=True; Port=2198}
-VNC          : @{ProtocolEnabled=False; Port=5900}
+HTTP          : @{ProtocolEnabled=True; Port=80}
+HTTPS         : @{ProtocolEnabled=True; Port=443}
+SNMP          : @{ProtocolEnabled=True; Port=161}
+VirtualMedia  : @{ProtocolEnabled=True; Port=8208}
+IPMI          : @{ProtocolEnabled=True; Port=623}
+SSH           : @{ProtocolEnabled=True; Port=22}
+KVMIP         : @{ProtocolEnabled=True; Port=2198}
+SSDP          : @{ProtocolEnabled=False; Port=1900; NotifyMulticastIntervalSeconds=600; NotifyTTL=2; NotifyIPv6Scope=Site}
+VNC           : @{ProtocolEnabled=False; Port=5900}
+Video         : @{ProtocolEnabled=True; Port=2199}
+NAT           :
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -81,10 +86,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -99,7 +104,8 @@ Modify iBMC service information, including the enablement state and port number.
 
 .DESCRIPTION
 Modify iBMC service information, including the enablement state and port number.
-Support Services: "HTTP", "HTTPS", "SNMP", "VirtualMedia", "IPMI", "SSH", "KVMIP", "VNC", "Video", "NAT"
+Support Services:
+  "HTTP", "HTTPS", "SNMP", "VirtualMedia", "IPMI", "SSH", "KVMIP", "VNC", "Video", "NAT"
 
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
@@ -107,11 +113,12 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER ServiceName
 Indicates the type of service to be modified.
-Support value set: "HTTP", "HTTPS", "SNMP", "VirtualMedia", "IPMI", "SSH", "KVMIP",  "VNC", "Video", "NAT".
+Support value set:
+  "HTTP", "HTTPS", "SNMP", "VirtualMedia", "IPMI", "SSH", "KVMIP", "VNC", "Video", "NAT".
 
 .PARAMETER Enabled
 Indicates enabled the service or not.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER Port
 Indicates the network port which this service listen on.
@@ -131,7 +138,7 @@ PS C:\> Set-iBMCService -Session $session -ServiceName VNC -Enabled $true -Port 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
 
-Get-iBMCService
+Get-iBMCServices
 Connect-iBMC
 Disconnect-iBMC
 
@@ -189,7 +196,7 @@ Disconnect-iBMC
         }
       }
 
-      $(Get-Logger).info($(Trace-Session $RedfishSession "Update Service info: $Payload"))
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json -Depth 5)"))
       Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload | Out-Null
       return $null
     }
@@ -205,10 +212,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

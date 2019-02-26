@@ -98,10 +98,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -123,7 +123,7 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER ServiceEnabled
 Indicates whether NTP is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER PreferredNtpServer
 Indicates the address of the preferred NTP server.
@@ -151,7 +151,7 @@ It can be a value from 3 to 17. The value cannot be less than MinPollingInterval
 
 .PARAMETER ServerAuthenticationEnabled
 Indicates Whether server authentication is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .OUTPUTS
 Null
@@ -235,6 +235,7 @@ Disconnect-iBMC
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set iBMC NTP Settings now"))
       $Path = "/Managers/$($RedfishSession.Id)/NtpService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
     }
@@ -270,10 +271,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -407,6 +408,10 @@ Disconnect-iBMC
         Content=$KeyFilePath;
       }
 
+      $Clone = $Payload.clone()
+      $Clone.Content = Protect-NetworkUriUserInfo $KeyFilePath
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json)"))
+
       # if a remote URI is provided, will return:
       #
       # {
@@ -539,7 +544,7 @@ Disconnect-iBMC
       return Wait-RedfishTasks $pool $Session $RedfishTasks -ShowProgress
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

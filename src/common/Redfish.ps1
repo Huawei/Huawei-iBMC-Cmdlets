@@ -27,7 +27,7 @@ Add-Type @'
 '@
 }
 
-function New-iBMCRedfishSession {
+function New-RedfishSession {
 <#
 .SYNOPSIS
 Create sessions for iBMC Redfish REST API.
@@ -61,14 +61,14 @@ See typical usage examples in the Redfish.ps1 file installed with this module.
 
 .INPUTS
 System.String
-You can pipe the Address i.e. the hostname or IP address to New-iBMCRedfishSession.
+You can pipe the Address i.e. the hostname or IP address to New-RedfishSession.
 
 .OUTPUTS
 System.Management.Automation.PSCustomObject
-New-iBMCRedfishSession returns a RedfishSession Object which contains - AuthToken, BaseUri, Location, TrustCert and Alive.
+New-RedfishSession returns a RedfishSession Object which contains - AuthToken, BaseUri, Location, TrustCert and Alive.
 
 .EXAMPLE
-PS C:\> $session = New-iBMCRedfishSession -Address 10.1.1.2 -Username root -Password password
+PS C:\> $session = New-RedfishSession -Address 10.1.1.2 -Username root -Password password
 
 
 PS C:\> $session | fl
@@ -81,7 +81,7 @@ RootData     : @{@odata.context=/redfish/v1/$metadata#ServiceRoot/; @odata.id=/r
 
 .EXAMPLE
 PS C:\> $credential = Get-Credential
-PS C:\> $session = New-iBMCRedfishSession -Address 192.184.217.212 -Credential $credential
+PS C:\> $session = New-RedfishSession -Address 192.184.217.212 -Credential $credential
 PS C:\> $session | fl
 
 RootUri      : https://10.1.1.2/redfish/v1/
@@ -182,7 +182,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
 }
 
 
-function Close-iBMCRedfishSession {
+function Close-RedfishSession {
 <#
 .SYNOPSIS
 Close a specified session of iBMC Redfish Server.
@@ -191,20 +191,20 @@ Close a specified session of iBMC Redfish Server.
 Close a specified session of iBMC Redfish Server by sending HTTP Delete request to location holds by "Location" property in Session object passed as parameter.
 
 .PARAMETER Session
-Session object that created by New-iBMCRedfishSession cmdlet.
+Session object that created by New-RedfishSession cmdlet.
 
 .NOTES
 The Session object will be detached from iBMC Redfish Server. And the Session can not be used by cmdlets which required Session parameter again.
 
 .INPUTS
-You can pipe the session object to Close-iBMCRedfishSession. The session object is obtained from executing New-iBMCRedfishSession cmdlet.
+You can pipe the session object to Close-RedfishSession. The session object is obtained from executing New-RedfishSession cmdlet.
 
 .OUTPUTS
 This cmdlet does not generate any output.
 
 
 .EXAMPLE
-PS C:\> Close-iBMCRedfishSession -Session $session
+PS C:\> Close-RedfishSession -Session $session
 PS C:\>
 
 This will disconnect the session given in the variable $session
@@ -235,7 +235,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
 }
 
 
-function Test-iBMCRedfishSession {
+function Test-RedfishSession {
 <#
 .SYNOPSIS
 Test whether a specified session of iBMC Redfish Server is still alive
@@ -244,17 +244,17 @@ Test whether a specified session of iBMC Redfish Server is still alive
 Test whether a specified session of iBMC Redfish Server is still alive by sending a HTTP get request to Session Location Uri.
 
 .PARAMETER Session
-Session object that created by New-iBMCRedfishSession cmdlet.
+Session object that created by New-RedfishSession cmdlet.
 
 .INPUTS
-You can pipe the session object to Test-iBMCRedfishSession. The session object is obtained from executing New-iBMCRedfishSession cmdlet.
+You can pipe the session object to Test-RedfishSession. The session object is obtained from executing New-RedfishSession cmdlet.
 
 .OUTPUTS
 true if still alive else false
 
 
 .EXAMPLE
-PS C:\> Test-iBMCRedfishSession -Session $session
+PS C:\> Test-RedfishSession -Session $session
 PS C:\>
 
 true
@@ -274,13 +274,16 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     throw $([string]::Format($(Get-i18n ERROR_PARAMETER_ILLEGAL), 'Session'))
   }
 
-  $method = "GET"
-  $path = $session.Location
-  $response = Invoke-RedfishRequest -Session $session -Path $path -Method $method -ContinueEvenFailed
-  $response.close()
+  try {
+    $method = "GET"
+    $path = $session.Location
+    Invoke-RedfishRequest -Session $session -Path $path -Method $method | Out-Null
+  } catch {
+    # we do not care about the reason of failure.
+    # if any exception is thrown, we treat it as session timeout
+    $session.Alive = $false
+  }
 
-  $success = $response.StatusCode.value__ -lt 400
-  $session.Alive = $success
   return $session
 }
 
@@ -293,7 +296,7 @@ Wait redfish tasks util success or failed
 Wait redfish tasks util success or failed
 
 .PARAMETER Session
-Session array that created by New-iBMCRedfishSession cmdlet.
+Session array that created by New-RedfishSession cmdlet.
 
 .PARAMETER Task
 Task array that return by redfish async job API
@@ -366,7 +369,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     for ($idx=0; $idx -lt $Tasks.Count; $idx++) {
       $Task = $Tasks[$idx]
       $Session = $Sessions[$idx]
-      if ($Task -isnot [Exception]) {
+      if ($Task -isnot [Exception] -and $null -ne $Task) {
         $TaskGuid = [int]$($GuidPrefix + $idx)
         $Task | Add-Member -MemberType NoteProperty 'index' $idx
         $Task | Add-Member -MemberType NoteProperty 'Guid' $TaskGuid
@@ -376,7 +379,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     }
 
     while ($true) {
-      $RunningTasks = @($($Tasks | Where-Object {$_ -isnot [Exception]} | Where-Object TaskState -eq 'Running'))
+      $RunningTasks = @($($Tasks | Where-Object {$_ -isnot [Exception]} | Where-Object TaskState -in @('Running', 'New')))
       $Logger.info("Remain running task count: $($RunningTasks.Count)")
       # $Logger.info("Remain running tasks: $RunningTasks")
       if ($RunningTasks.Count -eq 0) {
@@ -421,7 +424,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     }
 
     $Logger.info("All redfish tasks done")
-    return $Tasks
+    return ,$Tasks
   }
 
   end {
@@ -438,7 +441,7 @@ Wait SP file transfer util success or failed
 Wait SP file transfer util success or failed
 
 .PARAMETER Session
-Session array that created by New-iBMCRedfishSession cmdlet.
+Session array that created by New-RedfishSession cmdlet.
 
 .PARAMETER Task
 Task array that return by redfish async job API
@@ -545,7 +548,8 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
         $Parameters = @($Sessions[$Pending.index], $Pending)
         $ScriptBlock = {
           param($RedfishSession, $Pending)
-          return $(Get-SPFWUpdate $RedfishSession $Pending)
+          $SPFWUpdate = Get-SPFWUpdate $RedfishSession $Pending
+          return $SPFWUpdate
         }
         [Void] $AsyncTasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
       }
@@ -598,19 +602,22 @@ function Get-SPFWUpdate {
   process {
 
     function Update-FileListIfNeccess($Session, $SPFWUpdate) {
+      $SuccessStatus = @('Completed', 'Success')
       if ($SPFWUpdate.TransferState -in $SuccessStatus) {
         # try to get new FileList after success
         Start-Sleep -Seconds 3
-        while ($true) {
+        $TryTimes = 20
+        while ($TryTimes -gt 0) {
           $GetSPFileList = Invoke-RedfishRequest $Session $OdataId | ConvertFrom-WebResponse
           if ($null -ne $GetSPFileList.FileList -and $GetSPFileList.FileList.Count -gt 0) {
             $SPFWUpdate.FileList = $GetSPFileList.FileList
             break
           }
+          $TryTimes = $TryTimes - 1
           Start-Sleep -Seconds 1
         }
-        return $SPFWUpdate
       }
+      return $SPFWUpdate
     }
 
     $OdataId = $SPFWUpdate.'@odata.id'
@@ -640,7 +647,7 @@ Wait a redfish task util success or failed
 Wait a redfish task util success or failed
 
 .PARAMETER Session
-Session object that created by New-iBMCRedfishSession cmdlet.
+Session object that created by New-RedfishSession cmdlet.
 
 .PARAMETER Task
 Task object that return by redfish async job API
@@ -853,7 +860,7 @@ function Invoke-FileUploadIfNeccessary ($RedfishSession, $ImageFilePath, $Suppor
   }
 
   $Logger.info($(Trace-Session $RedfishSession "File $SecureFileUri is 'network' file, it's support directly."))
-  return $ImageFilePath
+  return Resolve-NetworkUriSchema $ImageFilePath
 }
 
 
@@ -974,7 +981,7 @@ function New-RedfishRequest {
     $Logger.Info($(Trace-Session $Session "No if-match present, will auto load etag now"))
     $Response = Invoke-RedfishRequest -Session $Session -Path $Path
     $OdataEtag = $Response.Headers.get('ETag')
-    $Logger.info($(Trace-Session $Session "Etag of Odata $Path -> $OdataEtag"))
+    # $Logger.info($(Trace-Session $Session "Etag of Odata $Path -> $OdataEtag"))
     $Response.close()
   }
 
@@ -997,19 +1004,24 @@ function New-RedfishRequest {
 
   $Request.ServerCertificateValidationCallback = {
     param($sender, $certificate, $chain, $errors)
+    if ($errors -eq 'None') {
+      return $true
+    }
+
     if ($true -eq $session.TrustCert) {
       # $Logger.debug("TrustCert present, Ignore HTTPS certification")
       return $true
     }
-    if ($Request -eq $sender) {
-      $Certificates = $(Get-ChildItem -Path cert:\ -Recurse | where-object Thumbprint -eq $certificate.Thumbprint)
-      if ($null -ne $Certificates -and $Certificates.count -gt 0) {
-        return $true
-      } else {
-        return $false
-      }
-    }
-    return $($errors -eq 'None')
+
+    # enable fingerprint match testing
+    # if ($Request -eq $sender) {
+    #   $Certificates = $(Get-ChildItem -Path cert:\ -Recurse | where-object Thumbprint -eq $certificate.Thumbprint)
+    #   if ($null -ne $Certificates -and $Certificates.count -gt 0) {
+    #     return $true
+    #   }
+    # }
+
+    return $false
   }
 
   # $Logger.info("The 'ProtocolVersion' of the protocol used is $($Request.ProtocolVersion)")
@@ -1045,9 +1057,10 @@ function New-RedfishRequest {
 
 function Resolve-RedfishFailureResponse ($Session, $Request, $Ex, $ContinueEvenFailed) {
   try {
-    $Logger.Error($(Trace-Session $Session $Ex))
+    $Logger.Warn(($(Trace-Session $Session $Ex)))
     $response = $Ex.Exception.InnerException.Response
     if ($null -ne $response) {
+      $StatusCode = $response.StatusCode.value__
       if ($StatusCode -eq 403){
         throw $(Get-i18n "FAIL_NO_PRIVILEGE")
       }
@@ -1058,11 +1071,10 @@ function Resolve-RedfishFailureResponse ($Session, $Request, $Ex, $ContinueEvenF
         throw $(Get-i18n "FAIL_NOT_SUPPORT")
       }
 
-      if ($ContinueEvenFailed) {
+      if ($ContinueEvenFailed -and $StatusCode -ne 401) {
         return $response
       }
 
-      $StatusCode = $response.StatusCode.value__
       $Content = Get-WebResponseContent $response
       $Message = "[$($Request.Method)] $($response.ResponseUri) -> code: $StatusCode; content: $Content"
       $Logger.warn($(Trace-Session $Session $Message))
@@ -1077,7 +1089,8 @@ function Resolve-RedfishFailureResponse ($Session, $Request, $Ex, $ContinueEvenF
       throw $Ex.Exception
     }
   } catch {
-    throw "[$($Session.Address)] $($_.Exception)"
+    # $Logger.info("rethrow exceptions [$($Session.Address)] $($_.Exception)")
+    throw "[$($Session.Address)] $($_.Exception.Message)"
   }
 }
 
@@ -1091,7 +1104,7 @@ function Resolve-RedfishPartialSuccessResponse($RedfishSession, $Response) {
     $Message = "[$($Response.Method)] $Uri -> code: $StatusCode; content: $ResponseContent"
     $Logger.warn($(Trace-Session $RedfishSession $Message))
     $FailuresToString = $($Failures -join "`n")
-    throw "[$($Session.Address)] $($FailuresToString)"
+    throw "[$($RedfishSession.Address)] $($FailuresToString)"
   } else {
     return $ResponseContent | ConvertFrom-Json
   }
@@ -1173,3 +1186,137 @@ function Get-RedfishResponseFailures {
   return $null
 }
 
+function Get-StoragePathCollection {
+<#
+.SYNOPSIS
+Get the path of RAID storage collection
+
+.DESCRIPTION
+
+.PARAMETER Session
+Get the path of RAID storage collection
+
+.OUTPUTS
+String[]
+RAID storage odata id array
+
+#>
+  [CmdletBinding()]
+  param (
+    [RedfishSession]
+    [parameter(Mandatory = $true, Position=0)]
+    $RedfishSession
+  )
+
+  $GetStoragesPath = "/Systems/$($RedfishSession.Id)/Storages"
+  $Storages = Invoke-RedfishRequest $RedfishSession $GetStoragesPath | ConvertFrom-WebResponse
+
+  $OdataIdList = New-Object System.Collections.ArrayList
+  for ($idx = 0; $idx -lt $Storages.Members.Count; $idx++) {
+    $StoragePath = $Storages.Members[$idx]."@odata.id"
+    if ($StoragePath -like '*/RAIDStorage*') {
+      [Void] $OdataIdList.Add($StoragePath)
+    } else {
+      continue
+    }
+  }
+
+  return ,$OdataIdList.ToArray()
+}
+
+
+function Get-VolumeOdataId {
+  <#
+  .DESCRIPTION
+  Fetch logical drive odata-id by Id
+  #>
+  [CmdletBinding()]
+  param (
+    [RedfishSession]
+    [parameter(Mandatory = $true, Position=0)]
+    $RedfishSession,
+
+    [String]
+    [parameter(Mandatory = $true, Position=1)]
+    $VolumeId
+  )
+
+  $StoragePaths = Get-StoragePathCollection $RedfishSession
+  for ($idx = 0; $idx -lt $StoragePaths.Count; $idx++) {
+    $StoragePath = $StoragePaths[$idx]
+    $GetVolumesPath = "$StoragePath/Volumes"
+    $Volumes = Invoke-RedfishRequest $RedfishSession $GetVolumesPath | ConvertFrom-WebResponse
+    for ($i = 0; $i -lt $Volumes.Members.Count; $i++) {
+      $Volume = $Volumes.Members[$i]
+      if ($Volume."@odata.id" -eq "$GetVolumesPath/$VolumeId") {
+        return $Volume."@odata.id"
+      }
+    }
+  }
+
+  return $null
+}
+
+function Assert-VolumeExistence {
+  <#
+  .DESCRIPTION
+  Assert StorageId and VolumeId Existence
+  #>
+  [CmdletBinding()]
+  param (
+    [RedfishSession]
+    [parameter(Mandatory = $true, Position=0)]
+    $RedfishSession,
+
+    [String]
+    [parameter(Mandatory = $true, Position=1)]
+    $StorageId,
+
+    [String]
+    [parameter(Mandatory = $true, Position=2)]
+    $VolumeId
+  )
+
+  Assert-StorageExistence $RedfishSession $StorageId
+
+  $GetVolumesPath = "/Systems/$($RedfishSession.Id)/Storages/$StorageId/Volumes"
+  $Volumes = Invoke-RedfishRequest $RedfishSession $GetVolumesPath | ConvertFrom-WebResponse
+  for ($i = 0; $i -lt $Volumes.Members.Count; $i++) {
+    $Volume = $Volumes.Members[$i]
+    # $Logger.info("$($Volume | ConvertTo-Json)")
+    if ($Volume."@odata.id".EndsWith("$GetVolumesPath/$VolumeId")) {
+      $VolumeIdExists = $true
+      break
+    }
+  }
+
+  if (-not $VolumeIdExists) {
+    $ErrorDetail = [String]::Format($(Get-i18n ERROR_VOLUMEID_NOT_EXISTS), $VolumeId)
+    throw "[$($RedfishSession.Address)] $ErrorDetail"
+  }
+}
+
+function Assert-StorageExistence {
+  <#
+  .DESCRIPTION
+  Assert StorageId Existence
+  #>
+  [CmdletBinding()]
+  param (
+    [RedfishSession]
+    [parameter(Mandatory = $true, Position=0)]
+    $RedfishSession,
+
+    [String]
+    [parameter(Mandatory = $true, Position=1)]
+    $StorageId
+  )
+
+  $GetStoragesPath = "/Systems/$($RedfishSession.Id)/Storages/$StorageId"
+  $Response = Invoke-RedfishRequest $RedfishSession $GetStoragesPath -ContinueEvenFailed
+  $StatusCode = $Response.StatusCode.value__
+  if ($StatusCode -eq 404) {
+    $ErrorDetail = [String]::Format($(Get-i18n ERROR_STORAGE_ID_NOT_EXISTS), $StorageId)
+    throw "[$($RedfishSession.Address)] $ErrorDetail"
+  }
+}

@@ -12,7 +12,7 @@
   RootModule             = 'Huawei-iBMC-Cmdlets.psm1'
 
   # Version number of this module.
-  ModuleVersion          = '1.0.0'
+  ModuleVersion          = '1.1.0'
 
   # Supported PSEditions
   # CompatiblePSEditions = @()
@@ -30,8 +30,9 @@
   Copyright              = '(c) 2018 Huawei Technologies Co., Ltd. All rights reserved.'
 
   # Description of the functionality provided by this module
-  Description            = 'Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.
-These cmdlets contains operation used most such as: bois setting, syslog, snmp, network, power and etc.'
+  Description            = 'Huawei iBMC cmdlets provide powershell Cmdlets to manage iBMC Redfish devices.
+These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
+Support devices include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5, CH121 V3, CH242 V3, XH622 V3.'
 
   # Minimum version of the Windows PowerShell engine required by this module
   PowerShellVersion      = '5.0'
@@ -103,18 +104,27 @@ These cmdlets contains operation used most such as: bois setting, syslog, snmp, 
     "scripts/AssetTag.ps1",
     "scripts/BIOS-Settings.ps1",
     "scripts/Connection.ps1",
+    "scripts/CPU.ps1",
     "scripts/Deploy.ps1",
+    "scripts/Drive.ps1",
+    "scripts/Fan.ps1",
     "scripts/Firmware.ps1",
+    "scripts/iBMC-Setting.ps1",
+    "scripts/Manager.ps1",
+    "scripts/Memory.ps1",
+    "scripts/NetworkAdapter.ps1",
     "scripts/NTP.ps1",
     "scripts/Power.ps1",
     "scripts/PowerControl.ps1",
-    "scripts/Reset.ps1",
+    "scripts/RAID.ps1",
     "scripts/Service.ps1",
     "scripts/SMTP.ps1",
     "scripts/SNMP.ps1",
+    "scripts/SPRAID.ps1",
     "scripts/Syslog.ps1",
     "scripts/System.ps1",
-    "scripts/User.ps1"
+    "scripts/User.ps1",
+    "scripts/Volume.ps1"
   )
 
   # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
@@ -135,7 +145,7 @@ These cmdlets contains operation used most such as: bois setting, syslog, snmp, 
       # IconUri = ''
 
       # ReleaseNotes of this module
-      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.0.0'
+      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.1.0'
 
     } # End of PSData hashtable
 

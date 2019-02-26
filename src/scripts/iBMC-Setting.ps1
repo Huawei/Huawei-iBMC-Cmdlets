@@ -1,17 +1,5 @@
 <# NOTE: iBMC Reset module Cmdlets #>
 
-try { [ResetType] | Out-Null } catch {
-Add-Type -TypeDefinition @'
-    public enum ResetType {
-      On,
-      ForceOff,
-      GracefulShutdown,
-      ForceRestart,
-      Nmi,
-      ForcePowerCycle
-    }
-'@
-}
 function Reset-iBMC {
 <#
 .SYNOPSIS
@@ -62,6 +50,7 @@ Disconnect-iBMC
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Reset iBMC now"))
       $Path = "/Managers/$($RedfishSession.Id)/Actions/Manager.Reset"
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
       Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload | Out-Null
       return $null
     }
@@ -78,10 +67,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -89,27 +78,19 @@ Disconnect-iBMC
   }
 }
 
-function Reset-iBMCServer {
+
+function Restore-iBMCFactorySetting {
 <#
 .SYNOPSIS
-Reset iBMC Server.
+Restore the factory settings.
 
 .DESCRIPTION
-Reset iBMC Server.
+Restore the factory settings.
+Note: This cmdlet is a high-risk operation. It should be used with caution.
 
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
 A session object identifies an iBMC server to which this cmdlet will be executed.
-
-.PARAMETER ResetType
-Indicates the Server reset type.
-Available Value Set: On, ForceOff, GracefulShutdown, ForceRestart, Nmi, ForcePowerCycle.
-- On: power on the Server.
-- ForceOff: forcibly powers on the server.
-- GracefulShutdown: gracefully shut down the OS.
-- ForceRestart: forcibly restart the Server.
-- Nmi: triggers a non-maskable interrupt (NMI).
-- ForcePowerCycle: forcibly power off and then power on the Server.
 
 .OUTPUTS
 None
@@ -118,14 +99,19 @@ In case of an error or warning, exception will be returned.
 
 .EXAMPLE
 
+Restore factory settings
+
 PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> Reset-iBMCServer -Session $session -ResetType ForceRestart
+PS C:\> Restore-iBMCFactorySetting $session
 
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
 
+Export-iBMCBIOSSetting
+Import-iBMCBIOSSetting
+Reset-iBMCBIOSSetting
 Connect-iBMC
 Disconnect-iBMC
 
@@ -134,11 +120,7 @@ Disconnect-iBMC
   param (
     [RedfishSession[]]
     [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
-    $Session,
-
-    [ResetType[]]
-    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
-    $ResetType
+    $Session
   )
 
   begin {
@@ -146,16 +128,13 @@ Disconnect-iBMC
 
   process {
     Assert-ArrayNotNull $Session 'Session'
-    Assert-ArrayNotNull $ResetType 'ResetType'
-    $ResetTypeList = Get-MatchedSizeArray $Session $ResetType
 
-    $Logger.info("Invoke Reset iBMC Server function")
+    $Logger.info("Invoke Restore BIOS Factory function")
 
     $ScriptBlock = {
-      param($RedfishSession, $Payload)
-      $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Reset iBMC Server now"))
-      $Path = "/Systems/$($RedfishSession.Id)/Actions/ComputerSystem.Reset"
-      Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload | Out-Null
+      param($RedfishSession)
+      $Path = "/Managers/$($RedfishSession.Id)/Actions/Oem/Huawei/Manager.RestoreFactory"
+      Invoke-RedfishRequest $RedfishSession $Path 'Post' | Out-Null
       return $null
     }
 
@@ -164,19 +143,15 @@ Disconnect-iBMC
       $pool = New-RunspacePool $Session.Count
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
-        $Payload = @{
-          "ResetType" = $ResetTypeList[$idx];
-        } | Resolve-EnumValues
-        $Parameters = @($RedfishSession, $Payload)
-        $Logger.info($(Trace-Session $RedfishSession "Submit Reset iBMC Server task"))
-        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
+        $Logger.info($(Trace-Session $RedfishSession "Submit Restore BIOS Factory task"))
+        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock @($RedfishSession)))
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

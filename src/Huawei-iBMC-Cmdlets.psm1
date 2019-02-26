@@ -6,20 +6,22 @@
 # Import all functional scripts
 $CommonFunctions = @(Get-ChildItem -Path $PSScriptRoot\common\ -Recurse -Filter *.ps1)
 $CommonFunctions | ForEach-Object {
+  $File = $_.FullName
   try {
-    . $_.FullName
+    . $File
   } catch {
-      Write-Error -Message "Failed to import file $($_.fullname)"
+      Write-Error -Message "Failed to import file: $File"
   }
 }
 
 # Import all User scripts
 $UserFunctions = @(Get-ChildItem -Path $PSScriptRoot\scripts\ -Recurse -Filter *.ps1)
 $UserFunctions | ForEach-Object {
+  $File = $_.FullName
   try {
-    . $_.FullName
+    . $File
   } catch {
-      Write-Error -Message "Failed to import file $($_.fullname)"
+      Write-Error -Message "Failed to import file: $File"
   }
 }
 
@@ -36,14 +38,13 @@ Gets the module details for the Huawei-iBMC-Cmdlets module.
 
 .OUTPUTS
 PSObject
-Returns module details include GUID, Name, Version, Path, Description
+Returns module details include Name, Version, Path, Description
 
 .EXAMPLE
 Get-iBMCModuleVersion
 
-GUID        : 89a819e4-4ce1-438a-bd57-ac9828aa5ef5
 Name        : Huawei-iBMC-Cmdlets
-Version     : 0.0.1
+Version     : 1.0.1
 Path        : C:\Program Files\WindowsPowerShell\Modules\Huawei-iBMC-Cmdlets\Huawei-iBMC-Cmdlets.psm1
 Description : Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.
               These cmdlets contains operation used most such as: bois setting, syslog, snmp, network, power and etc.
@@ -58,7 +59,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     [CmdletBinding(PositionalBinding=$false)]
     $module = Get-module | Where-Object {$_.Name -eq 'Huawei-iBMC-Cmdlets'}
     $versionObject = New-Object PSObject
-    $versionObject | Add-member 'GUID' $module.GUID
+    # $versionObject | Add-member 'GUID' $module.GUID
     $versionObject | Add-member 'Name' $module.Name
     $versionObject | Add-member 'Version' $module.Version
     $versionObject | Add-member 'Path' $module.Path

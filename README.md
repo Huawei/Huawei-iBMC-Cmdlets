@@ -1,7 +1,7 @@
 # Huawei iBMC Cmdlets
 
-Huawei iBMC Cmdlets provide cmdlets to quick access iBMC Redfish devices.
-These cmdlets contains operation used most such as: bois setting, syslog, snmp, network, power, firmware update and etc.
+Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.
+These cmdlets contains operation used most such as: bois setting, syslog, snmp, network, power and etc.
 
 
 ## Requirements
@@ -10,24 +10,13 @@ These cmdlets contains operation used most such as: bois setting, syslog, snmp, 
 
 - [.Net Framework 4.5](http://www.microsoft.com/en-us/download/details.aspx?id=30653)
 
+- [WMF 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395)
 
 ## Install
 
-- Online installation 
-  ```powershell
-  Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.0.1
-  ```
-- Local installation
-
-  1、Decompress the Huawei-iBMC-Cmdlets V1.0.zip software package to obtain the Huawei-iBMC-Cmdlets folder.
-
-  2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory.
-
-  3、Run the following command to install Huawei-iBMC-Cmdlets:
-
-  ```powershell
-  Import-Module Huawei-iBMC-Cmdlets -Force
-  ```
+```powershell
+Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.1.0
+```
 
 ## Usage
 

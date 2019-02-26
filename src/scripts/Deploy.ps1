@@ -78,10 +78,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -121,14 +121,11 @@ PS C:\> $Tasks
 Id           : 1
 Name         : vmm connect task
 ActivityName : [10.1.1.2] vmm connect task
-TaskState    : Exception
+TaskState    : Completed
 StartTime    : 2018-11-14T18:04:07+08:00
 EndTime      : 2018-11-14T18:04:08+08:00
-TaskStatus   : Warning
+TaskStatus   : OK
 TaskPercent  :
-Messages     : @{@odata.type=/redfish/v1/$metadata#MessageRegistry.1.0.0.MessageRegistry; MessageId=iBMC.1.0.ConnectionFa
-               iled; RelatedProperties=System.Object[]; Message=Failed to connect to virtual media.; MessageArgs=System.O
-               bject[]; Severity=Warning; Resolution=Please try again.}
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -162,10 +159,16 @@ Disconnect-iBMC
 
     $ScriptBlock = {
       param($RedfishSession, $ImageFilePath)
+      $CleanUpImageFilePath = Resolve-NetworkUriSchema $ImageFilePath
       $Payload = @{
         "VmmControlType" = "Connect";
-        "Image"          = $ImageFilePath;
+        "Image"          = $CleanUpImageFilePath;
       }
+
+      $Clone = $Payload.clone()
+      $Clone.Image = Protect-NetworkUriUserInfo $CleanUpImageFilePath
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json)"))
+
       $Path = "/Managers/$($RedfishSession.Id)/VirtualMedia/CD/Oem/Huawei/Actions/VirtualMedia.VmmControl"
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload
       return $Response | ConvertFrom-WebResponse
@@ -183,10 +186,10 @@ Disconnect-iBMC
 
       $RedfishTasks = Get-AsyncTaskResults $tasks
       $Results = Wait-RedfishTasks $pool $Session $RedfishTasks -ShowProgress
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -257,7 +260,9 @@ Disconnect-iBMC
       $Payload = @{
         "VmmControlType" = "Disconnect";
       }
+
       $Path = "/Managers/$($RedfishSession.Id)/VirtualMedia/CD/Oem/Huawei/Actions/VirtualMedia.VmmControl"
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload
       return $Response | ConvertFrom-WebResponse
     }
@@ -274,10 +279,10 @@ Disconnect-iBMC
 
       $RedfishTasks = Get-AsyncTaskResults $tasks
       $Results = Wait-RedfishTasks $pool $Session $RedfishTasks -ShowProgress
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -381,10 +386,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -493,6 +498,8 @@ Disconnect-iBMC
             } | Resolve-EnumValues;
           };
         }
+
+        $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json -Depth 5)"))
         $Headers = @{'If-Match' = $Response.Headers.get('ETag'); }
         Invoke-RedfishRequest $RedfishSession $Path 'PATCH' $Payload $Headers | Out-Null
         return $null
@@ -508,6 +515,7 @@ Disconnect-iBMC
         }
         $Logger.info($(Trace-Session $RedfishSession "[V5] Boot device sequence: $V5BootSequence"))
         $Payload = @{"Attributes" = $V5BootSequence; }
+        $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json -Depth 5)"))
         Invoke-RedfishRequest $RedfishSession $SetBiosPath 'PATCH' $Payload | Out-Null
         return $null
       }
@@ -524,10 +532,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -611,10 +619,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -710,6 +718,7 @@ Disconnect-iBMC
         };
       }
 
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
       Invoke-RedfishRequest $RedfishSession $Path 'PATCH' $Payload | Out-Null
       return $null
     }
@@ -725,10 +734,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

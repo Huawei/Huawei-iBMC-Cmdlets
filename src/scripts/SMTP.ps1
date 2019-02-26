@@ -1,7 +1,5 @@
 <# NOTE: iBMC SMTP module Cmdlets #>
 
-. $PSScriptRoot/../common/Types.ps1
-
 function Get-iBMCSMTPSetting {
 <#
 .SYNOPSIS
@@ -83,10 +81,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -108,18 +106,18 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER ServiceEnabled
 Indicates whether SMTP is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER ServerAddress
 Indicates the SMTP server address.
 
 .PARAMETER TLSEnabled
 Indicates whether TLS is enabled in the SMTP server.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER AnonymousLoginEnabled
 Indicates whether anonymous login is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER SenderUserName
 Indicates the User name of the email sender.
@@ -206,7 +204,7 @@ Disconnect-iBMC
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $SenderAddress,
 
-    [SecureString[]]
+    [System.Object[]]
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $SenderPassword,
 
@@ -247,12 +245,14 @@ Disconnect-iBMC
     $ScriptBlock = {
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set iBMC SMTP Settings now"))
+
+      $Clone = $Payload.Clone()
       $Path = "/Managers/$($RedfishSession.Id)/SmtpService"
-      if ($Payload.SenderPassword -is [securestring]) {
-        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Payload.SenderPassword)
-        $PlainPasswd = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-        $Payload.SenderPassword = $PlainPasswd
-      }
+      $PlainPasswd = ConvertTo-PlainString $Payload.SenderPassword "SenderPassword"
+      $Payload.SenderPassword = $PlainPasswd
+      $Clone.SenderPassword = "******"
+
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json -Depth 5)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -286,10 +286,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -372,10 +372,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -403,7 +403,7 @@ Support integer value range: [0, 3]
 
 .PARAMETER Enabled
 Indicates Whether the notification recipient is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER EmailAddress
 Indicates the notificate recipient mailbox address.
@@ -486,6 +486,7 @@ Disconnect-iBMC
       }
 
       $CompletePlayload = @{ RecipientAddresses = $Recipients; }
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($CompletePlayload | ConvertTo-Json -Depth 5)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $CompletePlayload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -513,10 +514,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 

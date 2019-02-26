@@ -8,15 +8,15 @@
 
 
 try { [AsyncTask] | Out-Null } catch {
-Add-Type @'
-public class AsyncTask
-{
-  public System.String ID;
-  public System.Management.Automation.PowerShell PowerShell;
-  public System.IAsyncResult AsyncResult;
-  public System.DateTime StartTime;
-  public System.Boolean isRunning;
-}
+  Add-Type @'
+  public class AsyncTask
+  {
+    public System.String ID;
+    public System.Management.Automation.PowerShell PowerShell;
+    public System.IAsyncResult AsyncResult;
+    public System.DateTime StartTime;
+    public System.Boolean isRunning;
+  }
 '@
 }
 
@@ -175,6 +175,8 @@ function Get-AsyncTaskResults {
     [Parameter(Position = 0, Mandatory = $True)][AsyncTask[]] $AsyncTasks,
     [Parameter(Position = 1, Mandatory = $false)][Switch] $ShowProgress
   )
+
+  $results = New-Object System.Collections.ArrayList
   # incrementing for Write-Progress
   $i = 0
   foreach ($AsyncTask in $AsyncTasks) {
@@ -185,23 +187,34 @@ function Get-AsyncTaskResults {
     }
     try {
       # waiting for powershell invoke finished and return result
-      $AsyncTask.PowerShell.EndInvoke($AsyncTask.AsyncResult)
+      $Result = $AsyncTask.PowerShell.EndInvoke($AsyncTask.AsyncResult)
       if ($AsyncTask.PowerShell.Streams.Error) {
-        $Logger.Warn($AsyncTask.PowerShell.Streams.Error)
-        $AsyncTask.PowerShell.Streams.Error
+        $Error = $AsyncTask.PowerShell.Streams.Error[0]
+        # $Logger.Warn($AsyncTask.PowerShell.Streams.Error)
+        $Logger.Warn("$Error`n$($Error.InvocationInfo.PositionMessage)`n$($Error.ScriptStackTrace)")
+        [Void] $results.add($AsyncTask.PowerShell.Streams.Error)
+      } else {
+        if ($Result.Count -eq 1) {
+          [Void] $results.add($Result[0])
+        } else {
+          # $Logger.Warn("Return value: $Result")
+          throw $(GET-i18n "ERROR_ILLEGAL_THREAD_RETURN_COUNT")
+        }
       }
     }
     catch {
       $ex = $_.Exception
-      $Logger.Warn($ex)
+      $Logger.Warn("$ex`n$($_.InvocationInfo.PositionMessage)`n$($ex.StackTrace)")
       while($null -ne $ex.InnerException) {
         $ex = $ex.InnerException
       }
-      $ex
+      [Void] $results.add($ex)
     }
     finally {
       $AsyncTask.isRunning = $false
       $AsyncTask.PowerShell.Dispose()
     }
   }
+
+  return , $results.ToArray()
 }

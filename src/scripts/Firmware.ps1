@@ -1,19 +1,13 @@
 <# NOTE: iBMC Firmware module Cmdlets #>
 
-function Get-iBMCFirmwareInfo {
+function Get-iBMCInbandFirmware {
 <#
 .SYNOPSIS
-Query information about the upgradable firmware resource collection of a server.
+Query information about the updatable inband firmware resource collection of a server.
 
 .DESCRIPTION
-Query information about the upgradable firmware resources of a server.
-Include all in-band firmwares and part of out-band firmwares.
-Only those out-band firmwares is included:
-- ActiveBMC
-- BackupBMC
-- Bios
-- MainBoardCPLD
-- chassisDiskBP1CPLD
+Query information about the updatable firmware resources of a server.
+Include SPService and all inband firmwares.
 
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
@@ -21,30 +15,29 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .OUTPUTS
 PSObject[]
-Returns PSObject which contains all upgradable firmware infomation if cmdlet executes successfully.
+Returns PSObject which contains all updatable firmware infomation if cmdlet executes successfully.
 In case of an error or warning, exception will be returned.
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> $Firmwares = Get-iBMCFirmwareInfo $session
-PS C:\> $Firmwares
+PS C:\> $Firmwares = Get-iBMCInbandFirmware $session
+PS C:\> $Firmwares | fl
 
-ActiveBMC                          : 3.00
-BackupBMC                          : 3.08
-Bios                               : 0.81
-MainBoardCPLD                      : 2.02
-chassisDiskBP1CPLD                 : 1.09
 SR430C-M 1G (SAS3108)@[RAID Card1] : 4.270.00-4382
 LOM (X722)@[LOM]                   : 3.33 0x80000f09 255.65535.255
+SPService                          : @{APPVersion=1.09; OSVersion=1.09; DataVersion=1.09}
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
 
-Set-iBMCSPService
+Get-iBMCOutbandFirmware
 Update-iBMCInbandFirmware
 Update-iBMCOutbandFirmware
+Invoke-iBMCFileUpload
+Get-iBMCSPTaskResult
+Set-iBMCSPService
 Connect-iBMC
 Disconnect-iBMC
 
@@ -62,32 +55,17 @@ Disconnect-iBMC
   process {
     Assert-ArrayNotNull $Session 'Session'
 
-    $Logger.info("Invoke Get BMC upgradable firmware function")
+    $Logger.info("Invoke Get BMC updatable inband firmware function")
 
     $ScriptBlock = {
       param($RedfishSession)
-      $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC upgradable firmware now"))
+      $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC updatable inband firmware now"))
 
       $Output = New-Object PSObject
 
-      # out-band
-      $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC upgradable out-band firmware now"))
-      $Path = "/UpdateService/FirmwareInventory"
-      $GetMembersResponse = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
-      $Members = $GetMembersResponse.Members
-      for ($idx = 0; $idx -lt $Members.Count; $idx++) {
-        $Member = $Members[$idx]
-        $OdataId = $Member.'@odata.id'
-        $InventoryName = $OdataId.Split("/")[-1]
-        if ($InventoryName -in $BMC.OutBandFirmwares) {
-          $Inventory = Invoke-RedfishRequest $RedfishSession $OdataId | ConvertFrom-WebResponse
-          $Output |  Add-Member -MemberType NoteProperty $Inventory.Name $Inventory.Version
-        }
-      }
-
       # in-band
       try {
-        $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC upgradable in-band firmware now"))
+        $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC updatable in-band firmware now"))
         $Path = "/Managers/$($RedfishSession.Id)/SPService/DeviceInfo"
         $DeviceInfo = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
         for ($idx = 0; $idx -lt $BMC.InBandFirmwares.Count; $idx++) {
@@ -109,6 +87,17 @@ Disconnect-iBMC
         $Logger.warn($(Trace-Session $RedfishSession "Failed to load in-band firmwares, reason: $_"))
       }
 
+      # SP
+      try {
+        $Logger.info($(Trace-Session $RedfishSession "Invoke Get SPService version now"))
+        $Path = "/Managers/$($RedfishSession.Id)/SPService"
+        $SPService = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
+        $Output |  Add-Member -MemberType NoteProperty "SPService" $SPService.Version
+      }
+      catch {
+        $Logger.warn($(Trace-Session $RedfishSession "Failed to get SPService, reason: $_"))
+        throw $(Get-i18n FAIL_SP_NOT_SUPPORT)
+      }
       return $Output
     }
 
@@ -117,15 +106,393 @@ Disconnect-iBMC
       $pool = New-RunspacePool $Session.Count
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
-        $Logger.info($(Trace-Session $RedfishSession "Submit Get BMC upgradable firmware task"))
+        $Logger.info($(Trace-Session $RedfishSession "Submit Get BMC updatable inband firmware task"))
         [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock @($RedfishSession)))
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
+    }
+  }
+
+  end {
+  }
+}
+
+function Get-iBMCOutbandFirmware {
+<#
+.SYNOPSIS
+Query information about the updatable outband firmware resource collection of a server.
+
+.DESCRIPTION
+Query information about the updatable firmware resources of a server.
+Only those out-band firmwares is included:
+- ActiveBMC
+- BackupBMC
+- Bios
+- all CPLD, example: MainBoardCPLD, chassisDiskBP1CPLD
+
+.PARAMETER Session
+iBMC redfish session object which is created by Connect-iBMC cmdlet.
+A session object identifies an iBMC server to which this cmdlet will be executed.
+
+.OUTPUTS
+PSObject[]
+Returns PSObject which contains all updatable firmware infomation if cmdlet executes successfully.
+In case of an error or warning, exception will be returned.
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Firmwares = Get-iBMCOutbandFirmware $session
+PS C:\> $Firmwares | fl
+
+ActiveBMC                          : 3.18
+BackupBMC                          : 3.18
+Bios                               : 0.81
+MainBoardCPLD                      : 2.02
+chassisDiskBP1CPLD                 : 1.10
+
+.LINK
+https://github.com/Huawei/Huawei-iBMC-Cmdlets
+
+Get-iBMCInbandFirmware
+Update-iBMCInbandFirmware
+Update-iBMCOutbandFirmware
+Invoke-iBMCFileUpload
+Get-iBMCSPTaskResult
+Set-iBMCSPService
+Connect-iBMC
+Disconnect-iBMC
+
+#>
+  [CmdletBinding()]
+  param (
+    [RedfishSession[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
+    $Session
+  )
+
+  begin {
+  }
+
+  process {
+    Assert-ArrayNotNull $Session 'Session'
+
+    $Logger.info("Invoke Get BMC updatable outband firmware function")
+
+    $ScriptBlock = {
+      param($RedfishSession)
+      $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC updatable outband firmware now"))
+
+      $Output = New-Object PSObject
+
+      # out-band
+      $Logger.info($(Trace-Session $RedfishSession "Invoke Get BMC updatable out-band firmware now"))
+      $Path = "/UpdateService/FirmwareInventory"
+      $GetMembersResponse = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
+      $Members = $GetMembersResponse.Members
+      for ($idx = 0; $idx -lt $Members.Count; $idx++) {
+        $Member = $Members[$idx]
+        $OdataId = $Member.'@odata.id'
+        $InventoryName = $OdataId.Split("/")[-1]
+        if ($InventoryName -in $BMC.OutBandFirmwares -or $InventoryName -like '*CPLD') {
+          $Inventory = Invoke-RedfishRequest $RedfishSession $OdataId | ConvertFrom-WebResponse
+          $Output |  Add-Member -MemberType NoteProperty $Inventory.Name $Inventory.Version
+        }
+      }
+
+      return $Output
+    }
+
+    try {
+      $tasks = New-Object System.Collections.ArrayList
+      $pool = New-RunspacePool $Session.Count
+      for ($idx = 0; $idx -lt $Session.Count; $idx++) {
+        $RedfishSession = $Session[$idx]
+        $Logger.info($(Trace-Session $RedfishSession "Submit Get BMC updatable outband firmware task"))
+        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock @($RedfishSession)))
+      }
+
+      $Results = Get-AsyncTaskResults $tasks
+      return ,$Results
+    }
+    finally {
+      Close-Pool $pool
+    }
+  }
+
+  end {
+  }
+}
+
+function Update-iBMCInbandFirmware {
+<#
+.SYNOPSIS
+Updata iBMC Inband firmware.
+
+.DESCRIPTION
+Updata iBMC Inband firmware. This function transfers firmware to SP service.
+Those transfered firmwares takes effect upon next system restart when SP Service start is enabled (Set-iBMCSPService function is provided for this).
+Tips: Only V5 servers used with BIOS version later than 0.39 support this function.
+
+.PARAMETER Session
+iBMC redfish session object which is created by Connect-iBMC cmdlet.
+A session object identifies an iBMC server to which this cmdlet will be executed.
+
+.PARAMETER Type
+Indicates the firmware type to be updated.
+Support value set: "Firmware", "SP".
+- Firmware: NIC, Raid
+- SP: Smart Provisioning Service
+
+.PARAMETER FileUri
+Indicates the file uri of firmware update image file.
+
+- When "Type" is Firmware:
+The firmware upgrade file is in .zip format.
+It supports HTTPS, SFTP, NFS, CIFS, SCP file transfer protocols.
+The URI cannot contain the following special characters: ||, ;, &&, $, |, >>, >, <
+
+For examples:
+- remote storage: protocol://username:password@hostname/directory/Firmware.zip
+
+- When "Type" is SP:
+The firmware upgrade file is in .ISO format. support only the CIFS and NFS protocols.
+The URI cannot contain the following special characters: ||, ;, &&, $, |, >>, >, <
+
+For examples:
+- remote storage: nfs://username:password@hostname/directory/Firmware.ISO
+
+.PARAMETER SignalFileUri
+Indicates the file path of the certificate file of the upgrade file.
+It is mandatory when upgrade Firmware while it is redundant when upgrade SP.
+- Signal file should be in .asc format
+- it supports HTTPS, SFTP, NFS, CIFS, SCP file transfer protocols.
+- The URI cannot contain the following special characters: ||, ;, &&, $, |, >>, >, <
+
+For examples:
+- remote storage: protocol://username:password@hostname/directory/Firmware.zip.asc
+
+.OUTPUTS
+Null
+Returns Null if cmdlet executes successfully.
+In case of an error or warning, exception will be returned.
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> Update-iBMCInbandFirmware -Session $session -Type Firmware `
+          -FileUri "nfs://10.10.10.2/data/nfs/NIC(X722)-Electrical-05022FTM-FW(3.33).zip" `
+          -SignalFileUri "nfs://10.10.10.2/data/nfs/NIC(X722)-Electrical-05022FTM-FW(3.33).zip.asc" `
+          -UpgradeMode Recover
+PS C:\> Set-iBMCSPService -Session $session -StartEnabled $true -SysRestartDelaySeconds 60
+PS C:\> Set-iBMCServerPower -Session $session -ResetType ForceRestart
+
+This example shows how to update inband firmware with remote file, enabled SP service and restart server
+
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> Update-iBMCInbandFirmware -Session $session -Type SP `
+          -FileUri "nfs://10.10.10.2/data/nfs/Firmware.ISO" `
+          -UpgradeMode Recover
+
+This example shows how to update SP with remote file.
+
+.LINK
+https://github.com/Huawei/Huawei-iBMC-Cmdlets
+
+Get-iBMCInbandFirmware
+Get-iBMCOutbandFirmware
+Update-iBMCOutbandFirmware
+Invoke-iBMCFileUpload
+Get-iBMCSPTaskResult
+Set-iBMCSPService
+Connect-iBMC
+Disconnect-iBMC
+
+#>
+  [CmdletBinding()]
+  param (
+    [RedfishSession[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
+    $Session,
+
+    [String[]]
+    [ValidateSet("Firmware", "SP")]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $Type,
+
+    [String[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $FileUri,
+
+    [String[]]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $SignalFileUri,
+
+    [UpgradeMode[]]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $UpgradeMode = [UpgradeMode]::Recover
+
+  )
+
+  begin {
+  }
+
+  process {
+    Assert-ArrayNotNull $Session 'Session'
+    Assert-ArrayNotNull $Type 'Type'
+    Assert-ArrayNotNull $FileUri 'FileUri'
+    Assert-ArrayNotNull $UpgradeMode 'UpgradeMode'
+
+    $FirmwareTypeList = Get-MatchedSizeArray $Session $Type 'Session' 'Type'
+    $FileUriList = Get-MatchedSizeArray $Session $FileUri 'Session' 'FileUri'
+    $UpgradeModeList = Get-MatchedSizeArray $Session $UpgradeMode 'Session' 'UpgradeMode'
+    $SignalFileUriList = Get-OptionalMatchedSizeArray $Session $SignalFileUri
+
+    $Logger.info("Invoke upgrade BMC inband firmware function")
+
+    $ScriptBlock = {
+      param($RedfishSession, $InbandFirmwareType, $ImageFilePath, $SignalFilePath, $UpgradeMode)
+
+      $Logger.info($(Trace-Session $RedfishSession "Invoke upgrade $InbandFirmwareType now"))
+
+      # transfer firmware image file
+      $GetSPUpdateService = "/Managers/$($RedfishSession.Id)/SPService/SPFWUpdate"
+      $SPServices = Invoke-RedfishRequest $RedfishSession $GetSPUpdateService | ConvertFrom-WebResponse
+      if ($SPServices.Members.Count -gt 0) {
+        $Payload = @{
+          "Parameter" = "all";
+          "UpgradeMode" = $UpgradeMode;
+          "ActiveMethod" = "OSRestart";
+        } | Resolve-EnumValues
+
+        if ($InbandFirmwareType -eq "Firmware") {
+          $ImageURI = Invoke-FileUploadIfNeccessary $RedfishSession $ImageFilePath $BMC.InBandImageFileSupportSchema
+          $SignalURI = Invoke-FileUploadIfNeccessary $RedfishSession $SignalFilePath $BMC.SignalFileSupportSchema
+          $Payload.ImageURI = $ImageURI
+          $Payload.SignalURI = $SignalURI
+          $Payload.ImageType = "Firmware"
+        } else {
+          $ImageURI = Invoke-FileUploadIfNeccessary $RedfishSession $ImageFilePath $BMC.SPImageFileSupportSchema
+          if ($null -ne $SignalURI) {
+            $Payload.SignalURI = Invoke-FileUploadIfNeccessary $RedfishSession $SignalFilePath $BMC.SignalFileSupportSchema
+          } else {
+            $Payload.SignalURI = ""
+          }
+          $Payload.ImageURI = $ImageURI
+          $Payload.ImageType = "SP"
+        }
+
+        if ($Payload.ImageURI.StartsWith('/tmp', "CurrentCultureIgnoreCase")) {
+          $Payload.ImageURI = "file://$($Payload.ImageURI)"
+        }
+        if ($Payload.SignalURI.StartsWith('/tmp', "CurrentCultureIgnoreCase")) {
+          $Payload.SignalURI = "file://$($Payload.SignalURI)"
+        }
+
+        $LogPayload = $Payload.Clone()
+        $LogPayload.ImageURI = Protect-NetworkUriUserInfo $LogPayload.ImageURI
+        $LogPayload.SignalURI = Protect-NetworkUriUserInfo $LogPayload.SignalURI
+        $Logger.Info($(Trace-Session $RedfishSession "Sending payload: $($LogPayload | ConvertTo-Json)"))
+
+        $SPServiceOdataId = $SPServices.Members[0].'@odata.id'
+        $SPFWUpdateUri = "$SPServiceOdataId/Actions/SPFWUpdate.SimpleUpdate"
+        Invoke-RedfishRequest $RedfishSession $SPFWUpdateUri 'POST' $Payload | Out-Null
+
+        Start-Sleep -Seconds 3
+        $Uri = New-Object System.Uri($Payload.ImageURI)
+        $FileName = $Uri.Segments[-1]
+        # $TransferStart = $false
+        $WaitTransfer = 200
+        while ($WaitTransfer -gt 0) {
+          # wait transfer progress finished
+          $Transfer = Invoke-RedfishRequest $RedfishSession $SPServiceOdataId | ConvertFrom-WebResponse
+          $Percent = $Transfer.TransferProgressPercent
+          $Logger.Info($(Trace-Session $RedfishSession "File $($Transfer.TransferFileName) transfer $($Percent)%"))
+          if ($Transfer.TransferFileName -eq $FileName) {
+            if ($null -ne $Percent -and $Percent -ge 0) {
+              $Logger.Info($(Trace-Session $RedfishSession "File $FileName transfer start."))
+              # $TransferStart = $true
+              break
+            }
+          }
+          $WaitTransfer = $WaitTransfer - 1
+          Start-Sleep -Milliseconds 100
+        }
+
+        # if (-not $TransferStart) {
+        #   throw $(Get-i18n "FAIL_SP_FILE_TRANSFER")
+        # }
+
+        return $Transfer
+
+        # Enable SP Service
+        # $SPServicePath = "/Managers/$($RedfishSession.Id)/SPService"
+        # $EnableSpServicePayload = @{
+        #   "SPStartEnabled"= $true;
+        #   "SysRestartDelaySeconds"= 30;
+        #   "SPTimeout"= 7200;
+        #   "SPFinished"= $true;
+        # }
+        # Invoke-RedfishRequest $RedfishSession $SPServicePath 'PATCH' $EnableSpServicePayload | Out-Null
+        # try {
+        #   # Restart Server
+        #   if ($Transfered) {
+        #     $Payload = @{
+        #       "ResetType" = [ResetType]::ForceRestart;
+        #     } | Resolve-EnumValues
+        #     $Path = "/Systems/$($RedfishSession.Id)/Actions/ComputerSystem.Reset"
+        #     Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload | Out-Null
+        #   }
+        # } catch {
+        #   throw $(Get-i18n "FAIL_SP_RESET_SYSTEM")
+        # }
+
+        # return $null
+      }
+      else {
+        throw $(Get-i18n "FAIL_SP_NOT_SUPPORT")
+      }
+    }
+
+    try {
+
+      $ScriptBlockParameters = New-Object System.Collections.ArrayList
+      $pool = New-RunspacePool $Session.Count
+      for ($idx = 0; $idx -lt $Session.Count; $idx++) {
+        $RedfishSession = $Session[$idx]
+        $FirmwareType = $FirmwareTypeList[$idx];
+        $ImageFilePath = $FileUriList[$idx]
+        $SignalFilePath = $SignalFileUriList[$idx]
+        $UpgradeMode_ = $UpgradeModeList[$idx]
+        if ($FirmwareType -eq "Firmware" -and $null -eq $SignalFilePath) {
+          throw $(Get-i18n "FAIL_SIGNAL_URI_REQUIRED")
+        }
+        $Parameters = @($RedfishSession, $FirmwareType, $ImageFilePath, $SignalFilePath, $UpgradeMode_)
+        [Void] $ScriptBlockParameters.Add($Parameters)
+      }
+
+      $tasks = New-Object System.Collections.ArrayList
+      for ($idx = 0; $idx -lt $Session.Count; $idx++) {
+        $Logger.info($(Trace-Session $RedfishSession "Submit upgrade BMC inband firmware task"))
+        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $ScriptBlockParameters[$idx]))
+      }
+
+      $TransferResults = Get-AsyncTaskResults $tasks
+      return $(Wait-SPFileTransfer $pool $Session $TransferResults -ShowProgress)
+    }
+    finally {
+      Close-Pool $pool
     }
   }
 
@@ -149,7 +516,7 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER StartEnabled
 Indicates Whether SP start is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER SysRestartDelaySeconds
 Indicates Maximum time allowed for the restart of the OS.
@@ -170,9 +537,12 @@ PS C:\> Set-iBMCSPService -Session $session -StartEnabled $true -SysRestartDelay
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
 
-Get-iBMCFirmwareInfo
+Get-iBMCInbandFirmware
+Get-iBMCOutbandFirmware
 Update-iBMCInbandFirmware
 Update-iBMCOutbandFirmware
+Invoke-iBMCFileUpload
+Get-iBMCSPTaskResult
 Connect-iBMC
 Disconnect-iBMC
 
@@ -214,9 +584,10 @@ Disconnect-iBMC
         "SPStartEnabled"= $Enabled;
         "SysRestartDelaySeconds"= $SysRestartDelaySeconds;
         "SPTimeout"= 7200;
-        "SPFinished"= $true;
+        "SPFinished"= $false;
       } | Remove-EmptyValues
 
+      $Logger.Info($(Trace-Session $RedfishSession "Sending payload: $($EnableSpServicePayload | ConvertTo-Json)"))
       Invoke-RedfishRequest $RedfishSession $SPServicePath 'PATCH' $EnableSpServicePayload | Out-Null
       return $null
     }
@@ -242,7 +613,105 @@ Disconnect-iBMC
       return Get-AsyncTaskResults $tasks
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
+    }
+  }
+
+  end {
+  }
+}
+
+
+function Get-iBMCSPTaskResult {
+<#
+.SYNOPSIS
+Query information about the configuration result resource of the SP service.
+
+.DESCRIPTION
+Query information about the configuration result resource of the SP service.
+Tips: only V5 servers used with BIOS version later than 0.39 support this function.
+
+.PARAMETER Session
+iBMC redfish session object which is created by Connect-iBMC cmdlet.
+A session object identifies an iBMC server to which this cmdlet will be executed.
+
+.OUTPUTS
+PSObject[]
+Returns PSObject indicates configuration result resource of SP Service if cmdlet executes successfully.
+In case of an error or warning, exception will be returned.
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Result = Get-iBMCSPTaskResult -Session $session
+PS C:\> $Result
+
+Id        : 1
+Name      : SP Result
+Status    : Idle
+OSInstall :
+Clone     :
+Recover   :
+
+
+.LINK
+https://github.com/Huawei/Huawei-iBMC-Cmdlets
+
+Get-iBMCInbandFirmware
+Get-iBMCOutbandFirmware
+Update-iBMCInbandFirmware
+Update-iBMCOutbandFirmware
+Invoke-iBMCFileUpload
+Set-iBMCSPService
+Connect-iBMC
+Disconnect-iBMC
+
+#>
+  [CmdletBinding()]
+  param (
+    [RedfishSession[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
+    $Session
+  )
+
+  begin {
+  }
+
+  process {
+    Assert-ArrayNotNull $Session 'Session'
+
+    $Logger.info("Invoke Get SP Result function")
+
+    $ScriptBlock = {
+      param($RedfishSession)
+
+      $Logger.info($(Trace-Session $RedfishSession "Invoke Get SP Result function now"))
+      $SPResultMemberPath = "/Managers/$($RedfishSession.Id)/SPService/SPResult"
+      $Collection = Invoke-RedfishRequest $RedfishSession $SPResultMemberPath | ConvertFrom-WebResponse
+      $Members = $Collection.Members
+      if ($Members.Count -ge 1) {
+        $GetSPResultPath = $Members[0].'@odata.id'
+        $Result = Invoke-RedfishRequest $RedfishSession $GetSPResultPath | ConvertFrom-WebResponse
+        $CleanUp = $Result | Clear-OdataProperties
+        return $CleanUp
+      } else {
+        return $null
+      }
+    }
+
+    try {
+      $tasks = New-Object System.Collections.ArrayList
+      $pool = New-RunspacePool $Session.Count
+      for ($idx = 0; $idx -lt $Session.Count; $idx++) {
+        $RedfishSession = $Session[$idx]
+        $Logger.info($(Trace-Session $RedfishSession "Submit Get SP Result task"))
+        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock @($RedfishSession)))
+      }
+      return Get-AsyncTaskResults $tasks
+    }
+    finally {
+      Close-Pool $pool
     }
   }
 
@@ -258,8 +727,7 @@ function Update-iBMCOutbandFirmware {
 Updata iBMC Outband firmware.
 
 .DESCRIPTION
-Updata iBMC Outband firmware. Out-band, in-band and SP firmwares are supported.
-Inband and SP firmware update is only supported by V5 servers used with BIOS version later than 0.39.
+Updata iBMC Outband firmware.
 
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
@@ -322,7 +790,7 @@ This example shows how to update outband firmware with ibmc temp file
 PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Update-iBMCOutbandFirmware -Session $session `
-          -FileUri nfs://115.159.160.190/data/nfs/2288H_V5_5288_V5-iBMC-V318.hpm
+          -FileUri nfs://10.10.10.2/data/nfs/2288H_V5_5288_V5-iBMC-V318.hpm
 
 Id           : 1
 Name         : Upgarde Task
@@ -338,8 +806,11 @@ This example shows how to update outband firmware with NFS network file
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
 
-Get-iBMCFirmwareInfo
+Get-iBMCInbandFirmware
+Get-iBMCOutbandFirmware
 Update-iBMCInbandFirmware
+Invoke-iBMCFileUpload
+Get-iBMCSPTaskResult
 Set-iBMCSPService
 Connect-iBMC
 Disconnect-iBMC
@@ -371,16 +842,21 @@ Disconnect-iBMC
 
       $Logger.info($(Trace-Session $RedfishSession "Invoke upgrade outband firmware now"))
       $ImageFilePath = Invoke-FileUploadIfNeccessary $RedfishSession $ImageFilePath $BMC.OutBandImageFileSupportSchema
-      $payload = @{'ImageURI' = $ImageFilePath; }
+      $Payload = @{'ImageURI' = $ImageFilePath; }
       if (-not $ImageFilePath.StartsWith('/tmp', "CurrentCultureIgnoreCase")) {
         $ImageFileUri = New-Object System.Uri($ImageFilePath)
         if ($ImageFileUri.Scheme -ne 'file') {
-          $payload."TransferProtocol" = $ImageFileUri.Scheme.ToUpper();
+          $Payload."TransferProtocol" = $ImageFileUri.Scheme.ToUpper();
         }
       }
+
+      $Clone = $Payload.clone()
+      $Clone.ImageURI = Protect-NetworkUriUserInfo $ImageFilePath
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json)"))
+
       # try submit upgrade outband firmware task
       $Path = "/UpdateService/Actions/UpdateService.SimpleUpdate"
-      $Response = Invoke-RedfishRequest $RedfishSession $Path 'Post' $payload
+      $Response = Invoke-RedfishRequest $RedfishSession $Path 'Post' $Payload
       return $Response | ConvertFrom-WebResponse
     }
 
@@ -400,10 +876,305 @@ Disconnect-iBMC
       return Wait-RedfishTasks $pool $Session $RedfishTasks -ShowProgress
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
   end {
   }
 }
+
+
+<#
+function Update-iBMCFirmware {
+.SYNOPSIS
+Updata iBMC firmware.
+
+.DESCRIPTION
+Updata iBMC firmware. Out-band, in-band and SP firmwares are supported.
+Inband and SP firmware update is only supported by V5 servers used with BIOS version later than 0.39.
+
+.PARAMETER Session
+iBMC redfish session object which is created by Connect-iBMC cmdlet.
+A session object identifies an iBMC server to which this cmdlet will be executed.
+
+.PARAMETER Type
+Indicates the firmware type to be updated.
+Support value set: "OutBand", "InBand", "SP".
+- OutBand: outband firmware
+- InBand: inband firmware
+- SP: Smart Provisioning Service
+
+.PARAMETER FileUri
+Indicates the file uri of firmware update image file.
+
+- When "Type" is OutBand:
+It is a string of up to 256 characters.
+It supports HTTPS, SCP, SFTP, CIFS, TFTP, NFS, and FILE file transfer protocols.
+
+- When "Type" is InBand:
+The firmware upgrade file is in .zip format.
+It supports HTTPS, SFTP, NFS, CIFS, SCP and FILE file transfer protocols.
+The URI cannot contain the following special characters: ||, ;, &&, $, |, >>, >, <
+
+- When "Type" is SP:
+only the CIFS and NFS protocols.
+The URI cannot contain the following special characters: ||, ;, &&, $, |, >>, >, <
+
+.PARAMETER SignalFileUri
+Indicates the file path of the certificate file of the upgrade file.
+- This parameter only works when "Type" is InBand and SP.
+- Signal file should be in .asc format
+- it supports HTTPS, SFTP, NFS, CIFS, SCP and FILE file transfer protocols.
+- The URI cannot contain the following special characters: ||, ;, &&, $, |, >>, >, <
+
+.OUTPUTS
+Null
+Returns Null if cmdlet executes successfully.
+In case of an error or warning, exception will be returned.
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> Update-iBMCFirmware -Session $session -Type Outband `
+          -FileUri E:\2288H_V5_5288_V5-iBMC-V318.hpm
+
+Id           : 1
+Name         : Upgarde Task
+ActivityName : [10.1.1.2] Upgarde Task
+TaskState    : Completed
+StartTime    : 2018-11-23T08:57:45+08:00
+EndTime      : 2018-11-23T09:01:24+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> Update-iBMCFirmware -Session $session -Type Outband `
+          -FileUri nfs://10.10.10.2/data/nfs/2288H_V5_5288_V5-iBMC-V318.hpm
+
+Id           : 1
+Name         : Upgarde Task
+ActivityName : [10.1.1.2] Upgarde Task
+TaskState    : Completed
+StartTime    : 2018-11-23T08:57:45+08:00
+EndTime      : 2018-11-23T09:01:24+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> Update-iBMCFirmware -Session $session -Type Inband `
+          -FileUri "E:\NIC(X722)-Electrical-05022FTM-FW(3.33).zip" `
+          -SignalFileUri "E:\NIC(X722)-Electrical-05022FTM-FW(3.33).zip.asc"
+
+Id           : 1
+Name         : Upgarde Task
+ActivityName : [10.1.1.2] Upgarde Task
+TaskState    : Completed
+StartTime    : 2018-11-23T08:57:45+08:00
+EndTime      : 2018-11-23T09:01:24+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> Update-iBMCFirmware -Session $session -Type Inband `
+          -FileUri nfs://10.10.10.2/data/nfs/NIC(X722)-Electrical-05022FTM-FW(3.33).zip `
+          -SignalFileUri nfs://10.10.10.2/data/nfs/NIC(X722)-Electrical-05022FTM-FW(3.33).zip.asc
+
+Id           : 1
+Name         : Upgarde Task
+ActivityName : [10.1.1.2] Upgarde Task
+TaskState    : Completed
+StartTime    : 2018-11-23T08:57:45+08:00
+EndTime      : 2018-11-23T09:01:24+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+
+
+.LINK
+https://github.com/Huawei/Huawei-iBMC-Cmdlets
+
+Get-iBMCServices
+Connect-iBMC
+Disconnect-iBMC
+
+  [CmdletBinding()]
+  param (
+    [RedfishSession[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
+    $Session,
+
+    [FirmwareType[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
+    $Type,
+
+    [String[]]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 2)]
+    $FileUri,
+
+    [String[]]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 3)]
+    $SignalFileUri
+  )
+
+  begin {
+    Assert-ArrayNotNull $Session 'Session'
+    Assert-ArrayNotNull $Type 'Type'
+    Assert-ArrayNotNull $FileUri 'FileUri'
+
+    $FirmwareTypeList = Get-MatchedSizeArray $Session $Type 'Session' 'Type'
+    $FileUriList = Get-MatchedSizeArray $Session $FileUri 'Session' 'FileUri'
+    $SignalFileUriList = Get-OptionalMatchedSizeArray $Session $SignalFileUri
+  }
+
+  process {
+    $Logger.info("Invoke upgrade BMC firmware function")
+
+    $ScriptBlock = {
+      param($RedfishSession, $FirmwareType, $ImageFilePath, $SignalFilePath)
+
+      function Invoke-FileUploadIfNeccessary ($RedfishSession, $ImageFilePath, $SupportSchema) {
+        $ImageFileUri = New-Object System.Uri($ImageFilePath)
+        if ($ImageFileUri.Scheme -notin $SupportSchema) {
+          throw $([string]::Format($(Get-i18n ERROR_FILE_URI_NOT_SUPPORT), $ImageFileUri, $SupportSchema.join(", ")))
+        }
+
+        $ImageFileUri = New-Object System.Uri($ImageFilePath)
+        if ($ImageFileUri.Scheme -eq 'file') {
+          $Ext = [System.IO.Path]::GetExtension($ImageFilePath)
+          if ($null -eq $Ext -or $Ext -eq '') {
+            $Ext = '.hpm'
+          }
+          $UploadFileName = "$(Get-RandomIntGuid)$Ext"
+
+          # upload image file to bmc
+          $Logger.Info($(Trace-Session $RedfishSession "$ImageFilePath is a local file, upload to iBMC now"))
+          Invoke-RedfishFirmwareUpload $RedfishSession $UploadFileName $ImageFilePath | Out-Null
+          $Logger.Info($(Trace-Session $RedfishSession "File uploaded as $UploadFileName success"))
+          return "/tmp/web/$UploadFileName"
+        }
+
+        return $ImageFilePath
+      }
+
+      function Update-OutbandFirmware ($RedfishSession, $ImageFilePath) {
+        $payload = @{'ImageURI' = $ImageFilePath; }
+        if (-not $ImageFilePath.StartsWith('/tmp/web/')) {
+          $ImageFileUri = New-Object System.Uri($ImageFilePath)
+          if ($ImageFileUri.Scheme -ne 'file') {
+            $payload."TransferProtocol" = $ImageFileUri.Scheme.ToUpper()
+          }
+        }
+        # try submit upgrade outband firmware task
+        $Path = "/UpdateService/Actions/UpdateService.SimpleUpdate"
+        $Response = Invoke-RedfishRequest $RedfishSession $Path 'Post' $payload
+        return $Response | ConvertFrom-WebResponse
+      }
+
+      function Update-InbandFirmware ($RedfishSession, $Payload) {
+        # try submit upgrade inband firmware task
+        $SPServicePath = "/Managers/$($RedfishSession.Id)/SPService"
+        # Enable SP Service
+        $EnableSpServicePayload = @{
+          "SPStartEnabled"= $true;
+          "SysRestartDelaySeconds"= 30;
+          "SPTimeout"= 7200;
+          "SPFinished"= $true;
+        }
+        Invoke-RedfishRequest $RedfishSession $SPServicePath 'PATCH' $EnableSpServicePayload | Out-Null
+
+        $GetSPUpdateService = "/Managers/$($RedfishSession.Id)/SPService/SPFWUpdate"
+        $SPServices = Invoke-RedfishRequest $RedfishSession $GetSPUpdateService | ConvertFrom-WebResponse
+        if ($SPServices.Members.Count -gt 0) {
+          if ($payload.ImageURI.StartsWith('/tmp/web')) {
+            $payload."ImageURI" = "file://$($payload.ImageURI)"
+          }
+          if ($payload.SignalURI.StartsWith('/tmp/web')) {
+            $payload."SignalURI" = "file://$($payload.SignalURI)"
+          }
+
+          $SPServiceOdataId = $SPServices.Members[0].'@odata.id'
+          $SPFWUpdateUri = "$SPServiceOdataId/Actions/SPFWUpdate.SimpleUpdate"
+          $Response = Invoke-RedfishRequest $RedfishSession $SPFWUpdateUri 'POST' $payload
+
+          # TODO 重启-os
+          # TODO /Managers/1/SPService/SPResult/1
+          return $Response | ConvertFrom-WebResponse
+        } else {
+          throw $(Get-i18n "FAIL_SP_NOT_SUPPORT")
+        }
+      }
+
+      $Logger.info($(Trace-Session $RedfishSession "Invoke upgrade $FirmwareType with file $ImageFileUri now"))
+      if ($FirmwareType -eq [FirmwareType]::OutBand) {
+        $ImageFilePath = Invoke-FileUploadIfNeccessary $RedfishSession $ImageFilePath $BMC.OutBandImageFileSupportSchema
+        return Update-OutbandFirmware $RedfishSession $ImageFilePath
+      }
+      else {
+        if ($null -eq $SignalFilePath -or $SignalFilePath -eq '') {
+          throw $(Get-i18n ERROR_SIGNAL_FILE_EMPTY)
+        }
+
+        $Payload = @{
+          "Parameter" = "all";
+          "UpgradeMode" = "Recover";
+          "ActiveMethod" = "OSRestart";
+        }
+
+        if ($FirmwareType -eq [FirmwareType]::InBand) {
+          $ImageURI = Invoke-FileUploadIfNeccessary $RedfishSession $ImageFilePath $BMC.InBandImageFileSupportSchema
+          $SignalURI = Invoke-FileUploadIfNeccessary $RedfishSession $SignalFilePath $BMC.SignalFileSupportSchema
+          $Payload.ImageURI = $ImageURI
+          $Payload.SignalURI = $SignalURI
+          $Payload.ImageType = "Firmware";
+        } else {
+          $ImageURI = Invoke-FileUploadIfNeccessary $RedfishSession $ImageFilePath $BMC.SPImageFileSupportSchema
+          $Payload.ImageURI = $ImageURI
+          $Payload.ImageType = "SP";
+        }
+
+        return Update-InbandFirmware $RedfishSession $Payload
+      }
+
+      return $null
+    }
+
+    try {
+      $tasks = New-Object System.Collections.ArrayList
+      $pool = New-RunspacePool $Session.Count
+      for ($idx = 0; $idx -lt $Session.Count; $idx++) {
+        $RedfishSession = $Session[$idx]
+        $FirmwareType = $FirmwareTypeList[$idx]
+        $ImageFilePath = $FileUriList[$idx]
+        $SignalFilePath = $SignalFileUriList[$idx]
+        $Parameters = @($RedfishSession, $FirmwareType, $ImageFilePath, $SignalFilePath)
+        $Logger.info($(Trace-Session $RedfishSession "Submit upgrade BMC firmware task"))
+        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
+      }
+
+      $RedfishTasks = Get-AsyncTaskResults $tasks
+      $Logger.Info("Upgrade firmware tasks: " + $RedfishTasks)
+      return Wait-RedfishTasks $pool $Session $RedfishTasks -ShowProgress
+    }
+    finally {
+      Close-Pool $pool
+    }
+  }
+
+  end {
+  }
+}
+#>

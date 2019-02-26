@@ -1,3 +1,16 @@
+try { [ResetType] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum ResetType {
+      On,
+      ForceOff,
+      GracefulShutdown,
+      ForceRestart,
+      Nmi,
+      ForcePowerCycle
+    }
+'@
+}
+
 try { [SnmpV3PrivProtocol] | Out-Null } catch {
   Add-Type -TypeDefinition @'
     public enum SnmpV3PrivProtocol {
@@ -154,7 +167,6 @@ try { [FirmwareType] | Out-Null } catch {
 '@
 }
 
-
 try { [UpgradeMode] | Out-Null } catch {
   Add-Type -TypeDefinition @'
     public enum UpgradeMode {
@@ -163,6 +175,173 @@ try { [UpgradeMode] | Out-Null } catch {
       Recover,
       APP,
       Driver
+    }
+'@
+}
+
+try { [DriveLEDState] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum DriveLEDState {
+      Off,
+      Blinking
+    }
+'@
+}
+
+try { [DriveState] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum DriveState {
+      Online,
+      Offline,
+      UnconfiguredGood,
+      UnconfigureBad,
+      JBOD
+    }
+'@
+}
+
+try { [HotSpareType] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum HotSpareType {
+      None,
+      Global,
+      Dedicated
+    }
+'@
+}
+
+try { [VolumeInitAction] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum VolumeInitAction {
+      QuickInit,
+      FullInit,
+      CancelInit
+    }
+'@
+}
+
+try { [VolumeInitMode] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum VolumeInitMode {
+      UnInit,
+      QuickInit,
+      FullInit
+    }
+'@
+}
+
+try { [StripSize] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum StripSize {
+      Size64KB = 65536,
+      Size128KB = 131072,
+      Size256KB = 262144,
+      Size512KB = 524288,
+      Size1MB = 1048576
+    }
+'@
+}
+
+try { [RAIDLevel] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum RAIDLevel {
+      RAID0,
+      RAID1,
+      RAID5,
+      RAID6,
+      RAID10,
+      RAID50,
+      RAID60
+    }
+'@
+}
+
+try { [SPRAIDLevel] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum SPRAIDLevel {
+      RAID0,
+      RAID1,
+      RAID10,
+      RAID1E
+    }
+'@
+}
+
+try { [DefaultReadPolicy] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum DefaultReadPolicy {
+      NoReadAhead,
+      ReadAhead
+    }
+'@
+}
+
+try { [DefaultWritePolicy] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum DefaultWritePolicy {
+      WriteThrough,
+      WriteBackWithBBU,
+      WriteBack
+    }
+'@
+}
+
+try { [DefaultCachePolicy] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum DefaultCachePolicy {
+      CachedIO,
+      DirectIO
+    }
+'@
+}
+
+try { [AccessPolicy] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum AccessPolicy {
+      ReadWrite,
+      ReadOnly,
+      Blocked
+    }
+'@
+}
+
+try { [DriveCachePolicy] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum DriveCachePolicy {
+      Unchanged,
+      Enabled,
+      Disabled
+    }
+'@
+}
+
+try { [RAIDCardModel] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum RAIDCardModel {
+      LSI3008
+    }
+'@
+}
+
+try { [FRU] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum FRU {
+      OS = 0,
+      Base = 1,
+      Fabric = 2,
+      FC = 3
+    }
+'@
+}
+
+try { [ControlType] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum ControlType {
+      On,
+      GracefulShutdown,
+      ForceRestart,
+      Nmi,
+      ForcePowerCycle
     }
 '@
 }

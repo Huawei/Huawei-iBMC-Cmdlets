@@ -1,7 +1,5 @@
 <# NOTE: iBMC SNMP module Cmdlets #>
 
-. $PSScriptRoot/../common/Types.ps1
-
 function Get-iBMCSNMPSetting {
 <#
 .SYNOPSIS
@@ -83,10 +81,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -108,19 +106,19 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER SnmpV1Enabled
 Indicates whether SNMPV1 is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER SnmpV2CEnabled
 Indicates whether SNMPV2C is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER LongPasswordEnabled
 Indicates whether long password is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER RWCommunityEnabled
 Indicates whether read-write community name is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER ReadOnlyCommunity
 Indicates the read only community name.
@@ -199,11 +197,11 @@ Disconnect-iBMC
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $RWCommunityEnabled,
 
-    [SecureString[]]
+    [System.Object[]]
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $ReadOnlyCommunity,
 
-    [SecureString[]]
+    [System.Object[]]
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $ReadWriteCommunity,
 
@@ -236,21 +234,20 @@ Disconnect-iBMC
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set iBMC SNMP Settings now"))
 
-      $Logger.info("$($Payload.ReadOnlyCommunity)")
-
+      $Clone = $Payload.clone()
       if ($null -ne $Payload.ReadOnlyCommunity) {
-        $Logger.info("into ")
-        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Payload.ReadOnlyCommunity)
-        $PlainPasswd = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-        $Payload.ReadOnlyCommunity = $PlainPasswd
+        $Plain = ConvertTo-PlainString $Payload.ReadOnlyCommunity "ReadOnlyCommunity"
+        $Payload.ReadOnlyCommunity = $Plain
+        $Clone.ReadOnlyCommunity = "******"
       }
 
       if ($null -ne $Payload.ReadWriteCommunity) {
-        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Payload.ReadWriteCommunity)
-        $PlainPasswd = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-        $Payload.ReadWriteCommunity = $PlainPasswd
+        $Plain = ConvertTo-PlainString $Payload.ReadWriteCommunity "ReadWriteCommunity"
+        $Payload.ReadWriteCommunity = $Plain
+        $Clone.ReadWriteCommunity = "******"
       }
 
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json)"))
       $Path = "/Managers/$($RedfishSession.Id)/SnmpService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
@@ -283,10 +280,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -377,10 +374,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -402,7 +399,7 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER ServiceEnabled
 Indicates whether trap is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER TrapVersion
 Indicates the SNMP trap version
@@ -491,7 +488,7 @@ Disconnect-iBMC
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $TrapServerIdentity,
 
-    [SecureString[]]
+    [System.Object[]]
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $CommunityName,
 
@@ -519,12 +516,15 @@ Disconnect-iBMC
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set BMC SNMP Settings now"))
       $Path = "/Managers/$($RedfishSession.Id)/SnmpService"
+      $Clone = $Payload.clone()
       if ($null -ne $Payload.CommunityName) {
-        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Payload.CommunityName)
-        $Plain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        $Plain = ConvertTo-PlainString $Payload.CommunityName "CommunityName"
         $Payload.CommunityName = $Plain
+        $Clone.CommunityName = "******"
       }
       $Payload = @{ "SnmpTrapNotification"=$Payload; }
+      $SecurePayload = @{ "SnmpTrapNotification"=$Clone; }
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($SecurePayload | ConvertTo-Json)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -555,10 +555,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -659,10 +659,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
@@ -690,7 +690,7 @@ Support integer value range: [0, 3]
 
 .PARAMETER Enabled
 Indicates Whether the trap server is enabled.
-Support values are powershell boolean value: $true, $false.
+Support values are powershell boolean value: $true(1), $false(0).
 
 .PARAMETER TrapServerAddress
 Indicates the Notificate Server address.
@@ -782,6 +782,7 @@ Disconnect-iBMC
         }
       }
 
+      $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($CompletePlayload | ConvertTo-Json -Depth 5)"))
       $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $CompletePlayload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
@@ -809,10 +810,10 @@ Disconnect-iBMC
       }
 
       $Results = Get-AsyncTaskResults $tasks
-      return $Results
+      return ,$Results
     }
     finally {
-      $pool.close()
+      Close-Pool $pool
     }
   }
 
