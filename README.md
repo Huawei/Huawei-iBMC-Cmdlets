@@ -1,12 +1,12 @@
 # Huawei iBMC Cmdlets
 
-Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.
+Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.  
 These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
 
 # Supported Device
 
-Huawei Blade Server:        CH121 V3, CH242 V3
-Huawei Rack Server:         1288H V5, 2288H V5, 2288 V5, 2488H V5，RH1288 V3, RH2288 V3, RH2288H V3
+Huawei Blade Server:        CH121 V3, CH242 V3  
+Huawei Rack Server:         1288H V5, 2288H V5, 2288 V5, 2488H V5，RH1288 V3, RH2288 V3, RH2288H V3  
 Huawei High-density Server: XH622 V3
 
 ## Requirements
