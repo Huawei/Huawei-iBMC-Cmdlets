@@ -1,13 +1,13 @@
 # Huawei iBMC Cmdlets
 
-  Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.  
-  These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
+    Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.  
+    These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
 
 # Supported Device
 
-  Huawei Blade Server:        CH121 V3, CH242 V3  
-  Huawei Rack Server:         1288H V5, 2288H V5, 2288 V5, 2488H V5，RH1288 V3, RH2288 V3, RH2288H V3  
-  Huawei High-density Server: XH622 V3
+    Huawei Blade Server:        CH121 V3, CH242 V3  
+    Huawei Rack Server:         1288H V5, 2288H V5, 2288 V5, 2488H V5，RH1288 V3, RH2288 V3, RH2288H V3   
+    Huawei High-density Server: XH622 V3
 
 ## Requirements
 
@@ -18,14 +18,18 @@
 - [WMF 5.0](https://www.microsoft.com/en-us/download/details.aspx?id=50395)
 
 ## Install
-- Online installation
+
+- Online installation  
+
   ```powershell
   Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.1.0
   ```
-- Local installation
+- Local installation  
+
   1、Decompress the Huawei-iBMC-Cmdlets v1.1.0.zip software packages to obtaion the Huawei-iBMC-Cmdlets folder  
   2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory  
   3、Run the following command to install Huawei-iBMC-Cmdlets:  
+  
   ```powershell
   Import-Module -Name Huawei-iBMC-Cmdlets -Force
   ```
