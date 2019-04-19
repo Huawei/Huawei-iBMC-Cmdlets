@@ -75,3 +75,6 @@ To get help for a specified cmdlet:
 ```
 PS C:\> get-help Connect-iBMC -Full
 ```
+
+## Open Source Software Statement
+    URL: https://github.com/Huawei/Huawei-iBMC-Cmdlets/Open Source Software Statement.xlsx 
