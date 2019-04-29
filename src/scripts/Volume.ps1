@@ -321,6 +321,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Remove-iBMCVolume -Session $session -StorageId RAIDStorage0 -VolumeId LogicDrive0
 
+Host         : 10.1.1.2
 Id           : 3
 Name         : volume deletion task
 ActivityName : [10.1.1.2] volume deletion task
@@ -433,6 +434,7 @@ Notes:
 - All the member disks must have the same type of interfaces and storage media.
 - When adding a volume to an existing drive group, enter the ID of any drive of the drive group.
 - The DriveID is represented by the Id properties of "Get-iBMCDrives" cmdlet's return value.
+- The FirmwareStatus property of the drive should be "UnconfiguredGood".
 
 .PARAMETER CacheCade
 Indicates whether it is a CacheCade volume.
@@ -536,6 +538,7 @@ PS C:\> $Drives = ,@(0, 1)
 PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -CacheCade $false -RAIDLevel RAID1 -Drives $Drives
 
+Host         : 10.1.1.2
 Id           : 4
 Name         : volume creation task
 ActivityName : [10.1.1.2] volume creation task
@@ -558,6 +561,7 @@ PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -AccessPolicy ReadWrite -InitMode QuickInit -SpanNumber 1 -DriveCachePolicy Unchanged `
           -DefaultWritePolicy WriteBackWithBBU -DefaultReadPolicy NoReadAhead
 
+Host         : 10.1.1.2
 Id           : 4
 Name         : volume creation task
 ActivityName : [10.1.1.2] volume creation task
@@ -577,6 +581,7 @@ PS C:\> $Drives = ,@(0, 1)
 PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -CacheCade $true -RAIDLevel RAID1 -Drives $Drives -DefaultWritePolicy WriteBackWithBBU
 
+Host         : 10.1.1.2
 Id           : 4
 Name         : volume creation task
 ActivityName : [10.1.1.2] volume creation task
@@ -673,7 +678,7 @@ Disconnect-iBMC
     $StorageIdList = Get-MatchedSizeArray $Session $StorageId
     $RAIDLevelList = Get-MatchedSizeArray $Session $RAIDLevel
     $DrivesList = Get-OptionalMatchedSizeMatrix $Session $Drives $null 'Session' 'Drives'
-    $CacheCadeList = Get-OptionalMatchedSizeMatrix $Session $CacheCade $null 'Session' 'CacheCade'
+    $CacheCadeList = Get-OptionalMatchedSizeArray $Session $CacheCade
 
     $VolumeNameList = Get-OptionalMatchedSizeArray $Session $VolumeName
     $StripSizeList = Get-OptionalMatchedSizeArray $Session $StripSize

@@ -52,6 +52,7 @@ DriverInfo               : @{DriverName=; DriverVersion=}
 DDRECCCount              : 0
 MinStripeSizeBytes       : 65536
 MaxStripeSizeBytes       : 1048576
+Drives                   : {HDDPlaneDisk0, HDDPlaneDisk1}
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -97,6 +98,15 @@ Disconnect-iBMC
 
         # $Logger.info($(Trace-Session $RedfishSession "Mixin: $($MixinId | ConvertTo-JSOn)"))
         $Result = Merge-NestProperties $MixinId @("Controller")
+
+        $Drives = New-Object System.Collections.ArrayList
+        $Storage.Drives | ForEach-Object {
+          $DriveOdataId = $_."@odata.id"
+          $DriveId = $DriveOdataId.split("/")[-1]
+          [Void] $Drives.Add($DriveId)
+        }
+        $Result | Add-Member -MemberType NoteProperty "Drives" $Drives
+
         # $Logger.info($(Trace-Session $RedfishSession "$($Result | ConvertTo-JSOn)"))
         [Void] $Controllers.Add($(Update-SessionAddress $RedfishSession $Result))
       }
@@ -383,6 +393,10 @@ This cmdlet works only after BIOS boot is complete when the RAID controller card
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
 A session object identifies an iBMC server to which this cmdlet will be executed.
+
+.PARAMETER StorageId
+Indicates the identifier of the storage to restore.
+The Id properties of "Get-iBMCRAIDControllers" cmdlet's return value represents Storage ID.
 
 .OUTPUTS
 PSObject[]

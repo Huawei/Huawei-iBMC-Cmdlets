@@ -23,6 +23,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSMTPSetting -Session $session
 
+Host                  : 10.1.1.2
 ServiceEnabled        : True
 ServerAddress         : smtp.qq.com
 TLSEnabled            : True
@@ -68,7 +69,7 @@ Disconnect-iBMC
         "SenderUserName", "SenderAddress", "EmailSubject", "EmailSubjectContains", "AlarmSeverity"
       )
       $SMTP = Copy-ObjectProperties $Response $Properties
-      return $SMTP
+      return $(Update-SessionAddress $RedfishSession $SMTP)
     }
 
     try {
@@ -322,12 +323,29 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $recipients = Get-iBMCSMTPRecipients -Session $session
 PS C:\> $recipients
 
-MemberId Enabled EmailAddress    Description
--------- ------- ------------    -----------
-0           True xmufive@qq.com  test 1
-1           True test@huawei.com test
-2          False
-3          False
+Host         : 10.1.1.2
+MemberId     : 0
+Enabled      : False
+EmailAddress :
+Description  :
+
+Host         : 10.1.1.2
+MemberId     : 1
+Enabled      : False
+EmailAddress :
+Description  :
+
+Host         : 10.1.1.2
+MemberId     : 2
+Enabled      : False
+EmailAddress :
+Description  :
+
+Host         : 10.1.1.2
+MemberId     : 3
+Enabled      : False
+EmailAddress :
+Description  :
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -359,7 +377,12 @@ Disconnect-iBMC
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Get iBMC SMTP Notification Recipients now"))
       $Path = "/Managers/$($RedfishSession.Id)/SmtpService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
-      return , $Response.RecipientAddresses
+      $Results = New-Object System.Collections.ArrayList
+      for ($idx = 0; $idx -lt $Response.RecipientAddresses.Count; $idx++) {
+        $RecipeAddress = Update-SessionAddress $RedfishSession $Response.RecipientAddresses[$idx]
+        [Void]  $Results.Add($RecipeAddress)
+      }
+      return , $Results.ToArray()
     }
 
     try {

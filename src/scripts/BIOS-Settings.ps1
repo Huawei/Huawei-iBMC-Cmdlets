@@ -16,8 +16,8 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 The dest settings file path:
 
 Dest path examples:
-1. export to ibmc local temporary storage: /tmp/filename.xml
-2. export to remote storage: protocol://username:password@hostname/directory/filename.xml
+1. export to ibmc local temporary path: /tmp/filename.xml
+2. export to remote path: protocol://username:password@hostname/directory/filename.xml
    support protocol list: sftp, https, nfs, cifs, scp
 
 .OUTPUTS
@@ -71,7 +71,7 @@ PS C:\> $Tasks
 PS C:\> Invoke-iBMCFileDownload -Session $session `
           -BMCFileUri $BMCFilePath -LocalFileUri $LocalFilePath
 
-
+Host         : 10.1.1.2
 Id           : 4
 Name         : Export Config File Task
 ActivityName : [10.1.1.2] Export Config File Task
@@ -197,6 +197,7 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $Tasks = Import-iBMCBIOSSetting $session 'C:\10.10.10.2.xml'
 PS C:\> $Tasks
 
+Host         : 10.1.1.2
 Id           : 2
 Name         : Import Config File Task
 ActivityName : [10.1.1.2] Import Config File Task
@@ -300,13 +301,11 @@ Disconnect-iBMC
     $ScriptBlock = {
       param($RedfishSession, $ConfigFilePath)
 
-      $Logger.Info($(Trace-Session $RedfishSession "schemas: $($BMC.BIOSConfigFileSupportSchema)"))
       $payload = @{'Type' = "URI";}
       if ($ConfigFilePath.StartsWith("/tmp")) {
         $payload.Content = $ConfigFilePath
       } else {
         $ContentURI = Invoke-FileUploadIfNeccessary $RedfishSession $ConfigFilePath $BMC.BIOSConfigFileSupportSchema
-        $Logger.Info($(Trace-Session $RedfishSession "upload file result: $ContentURI"))
         $Payload.Content = $ContentURI
         # old implementation: it seems upload xml file is not support?
         # $UploadFileName = "$(Get-RandomIntGuid).hpm"

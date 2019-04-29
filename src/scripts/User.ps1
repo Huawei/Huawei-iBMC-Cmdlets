@@ -49,6 +49,7 @@ PS C:\> $pwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Fo
 PS C:\> $User = Add-iBMCUser -Session $session -Username new-user -Password $pwd -Role Operator
 PS C:\> $User
 
+Host     : 10.1.1.2
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -67,6 +68,7 @@ PS C:\> $session = Connect-iBMC -Address 10.10.10.2 -Credential $credential -Tru
 PS C:\> $pwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> ,$session | Add-iBMCUser -Username new-user -Password $pwd -Role Operator
 
+Host     : 10.1.1.2
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -84,6 +86,7 @@ PS C:\> $sessions = Connect-iBMC -Address 10.10.10.2-3 -Credential $credential -
 PS C:\> $pwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> ,$sessions | Add-iBMCUser -Username new-user,new-user2 -Password $pwd,$pwd -Role Operator,Administrator
 
+Host     : 10.1.1.2
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -92,6 +95,7 @@ Locked   : True
 Enabled  : True
 Oem      : @{Huawei=}
 
+Host     : 10.1.1.3
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -158,7 +162,7 @@ Disconnect-iBMC
 
       $Properties = @("Id", "Name", "UserName", "RoleId", "Locked", "Enabled", "Oem")
       $User = Copy-ObjectProperties $Response $Properties
-      return $User
+      return $(Update-SessionAddress $Session $User)
     }
     try {
       $tasks = New-Object System.Collections.ArrayList
@@ -206,6 +210,7 @@ PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2-3 -Credential $credential -Tr
 PS C:\> $Users = Get-iBMCUser -Session $sessions
 PS C:\> $Users
 
+Host     : 10.1.1.2
 Id       : 2
 Name     : User Account
 UserName : Administrator
@@ -214,6 +219,7 @@ Locked   : False
 Enabled  : True
 Oem      : @{Huawei=}
 
+Host     : 10.1.1.2
 Id       : 3
 Name     : User Account
 UserName : root
@@ -222,6 +228,7 @@ Locked   : True
 Enabled  : True
 Oem      : @{Huawei=}
 
+Host     : 10.1.1.2
 Id       : 4
 Name     : User Account
 UserName : zxh
@@ -260,7 +267,7 @@ Disconnect-iBMC
       $response.Members | ForEach-Object {
         $UserResponse = Invoke-RedfishRequest $session $_.'@odata.id' | ConvertFrom-WebResponse
         $User = Copy-ObjectProperties $UserResponse $Properties
-        [Void] $Users.Add($User)
+        [Void] $Users.Add($(Update-SessionAddress $Session $User))
       }
       return ,$Users.ToArray()
     }
@@ -350,6 +357,7 @@ PS C:\> $newPwd = ConvertTo-SecureString -String new-user-password -AsPlainText 
 PS C:\> $User = Set-iBMCUser -Session $session -Username powershell -NewUsername powershell2 -NewPassword $newPwd -NewRole Operator -Enabled $true -Unlocked $true
 PS C:\> $User
 
+Host     : 10.1.1.2
 Id       : 12
 Name     : User Account
 UserName : powershell
@@ -369,6 +377,7 @@ PS C:\> Add-iBMCUser -Session $sessions powershell $pwd 'Administrator'
 PS C:\> $newPwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> Set-iBMCUser -Session $sessions -Username powershell -NewUsername powershell2 -NewPassword $newPwd -NewRole Operator
 
+Host     : 10.1.1.2
 Id       : 12
 Name     : User Account
 UserName : powershell
@@ -386,6 +395,7 @@ PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2-3 -Credential $credential -Tr
 PS C:\> $newPwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> ,$sessions | Set-iBMCUser -Username username -NewUsername new-user2 -NewPassword $newPwd -NewRole Administrator
 
+Host     : 10.1.1.2
 Id       : 12
 Name     : User Account
 UserName : powershell
@@ -477,7 +487,7 @@ Disconnect-iBMC
           $SetUser = Resolve-RedfishPartialSuccessResponse $Session $Response
           $Properties = @("Id", "Name", "UserName", "RoleId", "Locked", "Enabled", "Oem")
           $PrettyUser = Copy-ObjectProperties $SetUser $Properties
-          return $PrettyUser
+          return $(Update-SessionAddress $Session $PrettyUser)
         }
       }
 

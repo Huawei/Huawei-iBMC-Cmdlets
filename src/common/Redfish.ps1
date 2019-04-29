@@ -336,7 +336,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
   }
 
   process {
-    function Write-TaskProgress($Task) {
+    function Write-TaskProgress($RedfishSession, $Task) {
       if ($ShowProgress) {
         if ($Task -isnot [Exception]) {
           $TaskState = $Task.TaskState
@@ -347,10 +347,13 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
             } else {
               $TaskPercent = [int]$TaskPercent.replace('%', '')
             }
+
+            $Logger.Info($(Trace-Session $RedfishSession "Task percent: $TaskPercent"))
             Write-Progress -Id $Task.Guid -Activity $Task.ActivityName -PercentComplete $TaskPercent `
               -Status "$($TaskPercent)% $(Get-i18n MSG_PROGRESS_PERCENT)"
           }
           elseif ($TaskState -eq 'Completed') {
+            $Logger.Info($(Trace-Session $RedfishSession "Task Completed"))
             Write-Progress -Id $Task.Guid -Activity $Task.ActivityName -Completed -Status $(Get-i18n MSG_PROGRESS_COMPLETE)
           }
           elseif ($TaskState -eq 'Exception') {
@@ -374,7 +377,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
         $Task | Add-Member -MemberType NoteProperty 'index' $idx
         $Task | Add-Member -MemberType NoteProperty 'Guid' $TaskGuid
         $Task | Add-Member -MemberType NoteProperty 'ActivityName' "[$($Session.Address)] $($Task.Name)"
-        Write-TaskProgress $Task
+        Write-TaskProgress $Session $Task
       }
     }
 
@@ -401,14 +404,16 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
       $ProcessedTasks = @($(Get-AsyncTaskResults $AsyncTasks))
       for ($idx=0; $idx -lt $ProcessedTasks.Count; $idx++) {
         $ProcessedTask = $ProcessedTasks[$idx]
+        $RedfishSession = $Sessions[$ProcessedTask.index]
         $Tasks[$ProcessedTask.index] = $ProcessedTask # update task
-        Write-TaskProgress $ProcessedTask
+        Write-TaskProgress $RedfishSession $ProcessedTask
       }
     }
 
     $FinishedTasks = @($($Tasks | Where-Object {$_ -isnot [Exception]}))
     for ($idx=0; $idx -lt $FinishedTasks.Count; $idx++) {
       $FinishedTask = $FinishedTasks[$idx]
+      $RedfishSession = $Sessions[$FinishedTask.index]
       $Properties = @(
         "Id", "Name", "ActivityName", "TaskState",
         "StartTime", "EndTime", "TaskStatus"
@@ -419,9 +424,12 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
       if ($FinishedTask.TaskState -ne $BMC.TaskState.Completed) {
         $CleanTask | Add-Member -MemberType NoteProperty "Messages" $FinishedTask.Messages
       }
-
+      $CleanTask = $(Update-SessionAddress $RedfishSession $CleanTask)
       $Tasks[$FinishedTask.index] = $CleanTask # update task
     }
+
+
+
 
     $Logger.info("All redfish tasks done")
     return ,$Tasks
@@ -477,7 +485,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
   }
 
   process {
-    function Write-SPTransferProgress($SPFWUpdate) {
+    function Write-SPTransferProgress($RedfishSession, $SPFWUpdate) {
       if ($ShowProgress) {
         if ($SPFWUpdate -isnot [Exception]) {
           if ($SPFWUpdate.TransferFileName -eq $SPFWUpdate.TargetFileName) {
@@ -523,7 +531,7 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
         $SPFWUpdate | Add-Member -MemberType NoteProperty 'Guid' $Guid
         $SPFWUpdate | Add-Member -MemberType NoteProperty 'ActivityName' "[$($Session.Address)] $($SPFWUpdate.Name)"
         $SPFWUpdate | Add-Member -MemberType NoteProperty 'TargetFileName' $SPFWUpdate.TransferFileName
-        Write-SPTransferProgress $SPFWUpdate
+        Write-SPTransferProgress $Session $SPFWUpdate
       }
     }
 
@@ -557,21 +565,23 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
       $Processed = @($(Get-AsyncTaskResults $AsyncTasks))
       for ($idx=0; $idx -lt $Processed.Count; $idx++) {
         $ProcessedTask = $Processed[$idx]
+        $RedfishSession = $Sessions[$ProcessedTask.index]
         $SPFWUpdates[$ProcessedTask.index] = $ProcessedTask # update task
-        Write-SPTransferProgress $ProcessedTask
+        Write-SPTransferProgress $RedfishSession $ProcessedTask
       }
     }
 
     $FinishedFiles = @($($SPFWUpdates | Where-Object {$_ -isnot [Exception]}))
     for ($idx=0; $idx -lt $FinishedFiles.Count; $idx++) {
       $Finished = $FinishedFiles[$idx]
+      $RedfishSession = $Sessions[$Finished.index]
       $Properties = @(
         "Name", "ActivityName", "TransferState", "TransferFileName",
         "TransferProgressPercent", "FileList", "Messages"
       )
 
       $Clone = Copy-ObjectProperties $Finished $Properties
-      $SPFWUpdates[$Finished.index] = $Clone
+      $SPFWUpdates[$Finished.index] = Update-SessionAddress $RedfishSession $Clone
     }
 
     $Logger.info("All SPFW Update file transfer done")

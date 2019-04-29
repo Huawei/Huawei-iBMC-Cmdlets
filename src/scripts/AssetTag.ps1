@@ -21,8 +21,10 @@ In case of an error or warning, exception will be returned.
 
 PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> Get-iBMCAssetTag -Session $session
+PS C:\> $AssetTag = Get-iBMCAssetTag -Session $session
+PS C:\> $AssetTag | fl
 
+Host     : 10.1.1.2
 AssetTag : powershell-asset-tag
 
 
@@ -54,7 +56,8 @@ Disconnect-iBMC
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Get iBMC Asset Tag now"))
       $Path = "/Systems/$($RedfishSession.Id)"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
-      return Copy-ObjectProperties $Response @('AssetTag')
+      $AssetTag = Copy-ObjectProperties $Response @('AssetTag')
+      return $(Update-SessionAddress $RedfishSession $AssetTag)
     }
 
     try {

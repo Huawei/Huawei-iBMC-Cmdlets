@@ -17,8 +17,8 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 The dest export to file path:
 
 Export to path examples:
-1. export to ibmc local temporary storage: /tmp/filename.xml
-2. export to remote storage: protocol://username:password@hostname/directory/filename.xml
+1. export to ibmc local temporary path: /tmp/filename.tar.gz
+2. export to remote path: protocol://username:password@hostname/directory/filename.tar.gz
    support protocol list: sftp, https, nfs, cifs, scp
 
 .OUTPUTS
@@ -34,6 +34,7 @@ PS C:\> $ExportTo = "nfs://10.10.10.3/data/nfs/collect.tar.gz"
 PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
 PS C:\> $Tasks
 
+Host         : 10.1.1.2
 Id           : 1
 Name         : Export Dump File Task
 ActivityName : [10.1.1.2] Export Dump File Task
@@ -53,6 +54,7 @@ PS C:\> $ExportTo = @("nfs://10.10.10.3/data/nfs/2.tar.gz", "nfs://10.10.10.3/da
 PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
 PS C:\> $Tasks
 
+Host         : 10.1.1.2
 Id           : 1
 Name         : Export Dump File Task
 ActivityName : [10.1.1.2] Export Dump File Task
@@ -62,6 +64,7 @@ EndTime      : 2019-01-19T04:30:19+00:00
 TaskStatus   : OK
 TaskPercent  : 100%
 
+Host         : 10.1.1.3
 Id           : 1
 Name         : Export Dump File Task
 ActivityName : [10.1.1.3] Export Dump File Task
@@ -81,6 +84,7 @@ PS C:\> $ExportTo = "/tmp/collect.tar.gz"
 PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
 PS C:\> $Tasks
 
+Host         : 10.1.1.2
 Id           : 1
 Name         : Export Dump File Task
 ActivityName : [10.1.1.2] Export Dump File Task
@@ -119,7 +123,7 @@ Disconnect-iBMC
     $Session,
 
     [String[]]
-    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
+    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
     $ExportTo
   )
 
@@ -130,7 +134,7 @@ Disconnect-iBMC
     Assert-ArrayNotNull $Session 'Session'
     Assert-ArrayNotNull $ExportTo 'ExportTo'
 
-    $ExportToList = Get-OptionalMatchedSizeArray $Session $ExportTo
+    $ExportToList = Get-MatchedSizeArray $Session $ExportTo
 
     if ($ExportTo.Count -eq 1 -and $Session.Count -gt 1) {
       if ($ExportTo[0] -notlike '/tmp/*') {

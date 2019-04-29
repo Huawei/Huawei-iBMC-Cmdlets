@@ -24,6 +24,7 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $System = Get-iBMCSystemInfo $session
 PS C:\> $System
 
+Host             : 10.1.1.2
 Id               : 1
 Name             : Computer System
 AssetTag         : my test
@@ -96,7 +97,7 @@ Disconnect-iBMC
       )
       $Oem = Copy-ObjectExcludes $Response.Oem.Huawei $Excludes
       $System.Oem.Huawei = $Oem
-      return $System
+      return Update-SessionAddress $RedfishSession $System
     }
 
     try {
@@ -141,22 +142,63 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 10.1.1.2-5 -Credential $credential -TrustCert
 PS C:\> $Interfaces = Get-iBMCSystemNetworkSettings $session
 PS C:\> $Interfaces
 
+Host                : 10.1.1.2
 Id                  : mainboardLOMPort1
-Name                : vmnic0
-PermanentMACAddress : 48:57:02:AB:0D:5A
+Name                : System Ethernet Interface
+PermanentMACAddress : 04:88:5F:D4:C6:52
+MACAddress          : 04:88:5F:D4:C6:52
 LinkStatus          : LinkUp
-IPv4Addresses       : {@{Address=10.1.1.2; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=}}
+IPv4Addresses       : {@{Address=10.1.1.20; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=}}
 IPv6Addresses       : {@{Address=2017::d5a; PrefixLength=64; AddressOrigin=SLAAC; AddressState=},
                       @{Address=2017::d5a;PrefixLength=64; AddressOrigin=SLAAC; AddressState=},
                       @{Address=fe80::4a57:2ff:feab:d5a; PrefixLength=64; AddressOrigin=Static; AddressState=}}
 IPv6DefaultGateway  : fe80::525d:acff:feed:5c27
 InterfaceType       : Physical
 BandwidthUsage      : 0
-BDF                 : 0000:35:00.2
+BDF                 : 0000:1a:00.0
+
+Host                : 10.1.1.3
+Id                  : mainboardLOMPort2
+Name                : System Ethernet Interface
+PermanentMACAddress : 04:88:5F:D4:C6:53
+MACAddress          : 04:88:5F:D4:C6:54
+LinkStatus          : NoLink
+IPv4Addresses       : {}
+IPv6Addresses       : {}
+IPv6DefaultGateway  :
+InterfaceType       : Physical
+BandwidthUsage      :
+BDF                 : 0000:1a:00.1
+
+Host                : 10.1.1.4
+Id                  : mainboardLOMPort3
+Name                : System Ethernet Interface
+PermanentMACAddress : 04:88:5F:D4:C6:54
+MACAddress          : 04:88:5F:D4:C6:54
+LinkStatus          :
+IPv4Addresses       : {}
+IPv6Addresses       : {}
+IPv6DefaultGateway  :
+InterfaceType       : Physical
+BandwidthUsage      :
+BDF                 : 0000:1a:00.2
+
+Host                : 10.1.1.5
+Id                  : mainboardLOMPort4
+Name                : System Ethernet Interface
+PermanentMACAddress : 04:88:5F:D4:C6:55
+MACAddress          : 04:88:5F:D4:C6:55
+LinkStatus          : NoLink
+IPv4Addresses       : {}
+IPv6Addresses       : {}
+IPv6DefaultGateway  :
+InterfaceType       : Physical
+BandwidthUsage      :
+BDF                 : 0000:1a:00.3
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -189,24 +231,25 @@ Disconnect-iBMC
         $Member = $EthernetInterfaces.Members[$idx]
         $EthernetInterface = Invoke-RedfishRequest $RedfishSession $Member.'@odata.id' | ConvertFrom-WebResponse
         # $Logger.Debug($(Trace-Session $RedfishSession "Load EthernetInterface: $EthernetInterface"))
-        if ($BMC.LinkStatus.LinkUp -eq $EthernetInterface.LinkStatus) {
-          $Properties = @(
-            "Id", "Name", "PermanentMACAddress", "LinkStatus",
-            "IPv4Addresses", "IPv6Addresses", "IPv6DefaultGateway"
-          )
-          $Clone = Copy-ObjectProperties $EthernetInterface $Properties
-          $Clone | Add-Member -MemberType NoteProperty "InterfaceType" $EthernetInterface.Oem.Huawei.InterfaceType
-          $Clone | Add-Member -MemberType NoteProperty "BandwidthUsage" $EthernetInterface.Oem.Huawei.BandwidthUsage
-          $Clone | Add-Member -MemberType NoteProperty "BDF" $EthernetInterface.Oem.Huawei.BDF
-          [Void] $Results.add($Clone)
-        }
+        # if ($BMC.LinkStatus.LinkUp -eq $EthernetInterface.LinkStatus) {
+        $Properties = @(
+          "Id", "Name", "PermanentMACAddress", "MACAddress", "LinkStatus",
+          "IPv4Addresses", "IPv6Addresses", "IPv6DefaultGateway"
+        )
+        $Clone = Copy-ObjectProperties $EthernetInterface $Properties
+        $Clone | Add-Member -MemberType NoteProperty "InterfaceType" $EthernetInterface.Oem.Huawei.InterfaceType
+        $Clone | Add-Member -MemberType NoteProperty "BandwidthUsage" $EthernetInterface.Oem.Huawei.BandwidthUsage
+        $Clone | Add-Member -MemberType NoteProperty "BDF" $EthernetInterface.Oem.Huawei.BDF
+        $Clone = Update-SessionAddress $RedfishSession $Clone
+        [Void] $Results.add($Clone)
+        # }
       }
 
       if ($Results.Count -eq 0) {
         throw $(Get-i18n FAIL_NO_LINKUP_INTERFACE)
       }
 
-      return ,$Results
+      return ,$Results.ToArray()
     }
 
     try {

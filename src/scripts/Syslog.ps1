@@ -25,6 +25,7 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $syslog = Get-iBMCSyslogSetting $session
 PS C:\> $syslog
 
+Host                 : 10.1.1.2
 ServiceEnabled       : True
 ServerIdentitySource : BoardSN
 AlarmSeverity        : Normal
@@ -66,7 +67,7 @@ Disconnect-iBMC
         "ServiceEnabled", "ServerIdentitySource", "AlarmSeverity", "TransmissionProtocol"
       )
       $Syslog = Copy-ObjectProperties $Response $Properties
-      return $Syslog
+      return Update-SessionAddress $RedfishSession $Syslog
     }
 
     try {
@@ -244,24 +245,28 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $Servers = Get-iBMCSyslogServer $session
 PS C:\> $Servers
 
+Host     : 10.1.1.2
 MemberId : 0
 Enabled  : False
 Address  :
 Port     : 0
 LogType  : {OperationLog, SecurityLog, EventLog}
 
+Host     : 10.1.1.2
 MemberId : 1
 Enabled  : False
 Address  :
 Port     : 0
 LogType  : {OperationLog, SecurityLog, EventLog}
 
+Host     : 10.1.1.2
 MemberId : 2
 Enabled  : False
 Address  :
 Port     : 0
 LogType  : {OperationLog, SecurityLog, EventLog}
 
+Host     : 10.1.1.2
 MemberId : 3
 Enabled  : False
 Address  :
@@ -302,7 +307,13 @@ Disconnect-iBMC
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
       # $Properties = @("MemberId", "Enabled", "Address", "Port", "LogType")
       # $Syslog = Copy-ObjectProperties $Response.SyslogServers $Properties
-      return ,$Response.SyslogServers
+      $Results = New-Object System.Collections.ArrayList
+      for ($idx = 0; $idx -lt $Response.SyslogServers.Count; $idx++) {
+        $SyslogServer = $Response.SyslogServers[$idx]
+        $SyslogServer = Update-SessionAddress $RedfishSession $SyslogServer
+        [Void]  $Results.Add($SyslogServer)
+      }
+      return , $Results.ToArray()
     }
 
     try {

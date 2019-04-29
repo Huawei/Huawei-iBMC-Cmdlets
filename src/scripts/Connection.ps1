@@ -268,6 +268,10 @@ Modify the iBMC session timeout period.
 .PARAMETER Session
 RedfishSession object that returned by Connect-iBMC cmdlet.
 
+.PARAMETER Timeout
+Indicates the timeout of session timeout period in seconds.
+Support integer value range: [30, 86400].
+
 .INPUTS
 You can pipe the RedfishSession array to Set-iBMCSessionTimeout.
 The RedfishSession array is obtained from executing Connect-iBMC cmdlet.
@@ -363,11 +367,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> Get-iBMCSessionTimeout -Session $session
+PS C:\> $SessionTimeout = Get-iBMCSessionTimeout -Session $session
+PS C:\> $SessionTimeout | fl
 
-SessionTimeout
---------------
-           600
+Host           : 10.1.1.2
+SessionTimeout : 600
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -398,7 +402,8 @@ Test-iBMCConnect
       $Logger.info($(Trace-Session $RedfishSession "Invoke Get iBMC session timeout now"))
       $Path = "/SessionService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
-      return Copy-ObjectProperties $Response @('SessionTimeout')
+      $Result = Copy-ObjectProperties $Response @('SessionTimeout')
+      return $(Update-SessionAddress $RedfishSession $Result)
     }
 
     try {

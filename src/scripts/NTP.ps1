@@ -42,6 +42,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Get-iBMCNTPSetting -Session $session
 
+Host                        : 10.1.1.2
 ServiceEnabled              : True
 PreferredNtpServer          : pre.huawei.com
 AlternateNtpServer          : alt.huawei.com
@@ -85,7 +86,7 @@ Disconnect-iBMC
         "MinPollingInterval", "MaxPollingInterval", "ServerAuthenticationEnabled"
       )
       $Settings = Copy-ObjectProperties $Response $Properties
-      return $Settings
+      return $(Update-SessionAddress $RedfishSession $Settings)
     }
 
     try {
@@ -234,8 +235,8 @@ Disconnect-iBMC
       param($RedfishSession, $Payload)
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Set iBMC NTP Settings now"))
       $Path = "/Managers/$($RedfishSession.Id)/NtpService"
-      $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
+      $Response = Invoke-RedfishRequest $RedfishSession $Path 'Patch' $Payload
       Resolve-RedfishPartialSuccessResponse $RedfishSession $Response | Out-Null
       return $null
     }
@@ -300,9 +301,9 @@ Indicates the path of NTP group key certificate file
 It supports HTTPS, SFTP, NFS, SCP, and CIFS and FILE file transfer protocols.
 
 For examples:
-- local storage: C:\ntp.keys or \\192.168.1.2\ntp.keys
-- ibmc local temporary storage: /tmp/ntp.keys
-- remote storage: protocol://username:password@hostname/directory/ntp.keys
+- local path: C:\ntp.keys or \\192.168.1.2\ntp.keys
+- ibmc local temporary path: /tmp/ntp.keys
+- remote path: protocol://username:password@hostname/directory/ntp.keys
 
 
 .OUTPUTS
@@ -317,6 +318,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Import-iBMCNTPGroupKey -Session $session -KeyFileUri "E:\ntp.keys"
 
+Host         : 10.1.1.2
 Id           : 1
 Name         : ntp certificate import
 ActivityName : [10.1.1.2] ntp certificate import
@@ -335,6 +337,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Import-iBMCNTPGroupKey -Session $session -KeyFileUri "/tmp/ntp.keys"
 
+Host         : 10.1.1.2
 Id           : 1
 Name         : ntp certificate import
 ActivityName : [10.1.1.2] ntp certificate import
@@ -352,6 +355,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Import-iBMCNTPGroupKey -Session $session -KeyFileUri "nfs://10.10.10.2/data/nfs/ntp.keys"
 
+Host         : 10.1.1.2
 Id           : 1
 Name         : ntp certificate import
 ActivityName : [10.1.1.2] ntp certificate import

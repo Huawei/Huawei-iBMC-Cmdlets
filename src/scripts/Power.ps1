@@ -24,6 +24,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Get-iBMCPowerInfo -Session $session
 
+Host                 : 10.1.1.2
 Id                   : 0
 Name                 : System Power Control 1
 PowerConsumedWatts   : 222 Watts
@@ -71,6 +72,7 @@ Disconnect-iBMC
         $PowerInfo | Add-Member -MemberType NoteProperty "MaxConsumedWatts" "$($Metrics.MaxConsumedWatts) Watts"
         $PowerInfo | Add-Member -MemberType NoteProperty "MinConsumedWatts" "$($Metrics.MinConsumedWatts) Watts"
         $PowerInfo | Add-Member -MemberType NoteProperty "AverageConsumedWatts" "$($Metrics.AverageConsumedWatts) Watts"
+        $PowerInfo = $(Update-SessionAddress $RedfishSession $PowerInfo)
         [Void] $Results.Add($PowerInfo)
       }
       return , $Results.ToArray()

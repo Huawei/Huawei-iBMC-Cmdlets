@@ -345,3 +345,13 @@ try { [ControlType] | Out-Null } catch {
     }
 '@
 }
+
+try { [LicenseSource] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum LicenseSource {
+      iBMC,
+      FusionDirector,
+      eSight
+    }
+'@
+}

@@ -21,6 +21,7 @@ $global:BMC = @{
   LinkStatus = @{
     NoLink='NoLink';
     LinkUp='LinkUp';
+    LinkDown='LinkDown';
   };
 
   TaskState = @{
@@ -97,6 +98,15 @@ $global:BMC = @{
   );
 
   CollectFileSupportSchema = @(
+    "https",
+    "sftp",
+    "nfs",
+    "cifs",
+    "scp",
+    "file"
+  );
+
+  LicenseFileSupportSchema = @(
     "https",
     "sftp",
     "nfs",

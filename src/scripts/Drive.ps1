@@ -13,6 +13,11 @@ This cmdlet works only after BIOS boot is complete when the RAID controller card
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
 A session object identifies an iBMC server to which this cmdlet will be executed.
 
+.PARAMETER StorageId
+Indicates the identifier of the storage which the drive belongs to.
+If StorageId is not provided, will get all drives instead.
+The Id properties of "Get-iBMCRAIDControllers" cmdlet's return value represents Storage ID.
+
 .OUTPUTS
 PSObject[][]
 Returns an array of PSObject indicates all drive resources if cmdlet executes successfully.
@@ -91,6 +96,50 @@ SpareforLogicalDrives         : {}
 TemperatureCelsius            : 33
 Type                          : Disk
 
+This example shows how to get all drives.
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Drives = Get-iBMCDrives -Session $Session -StorageId RAIDStorage0
+PS C:\> $Drives
+
+Host                          : 10.1.1.2
+Id                            : HDDPlaneDisk0
+Name                          : Disk0
+Model                         : MG04ACA400N
+Revision                      : FJ3J
+Status                        : @{State=Enabled; Health=OK}
+CapacityBytes                 : 3999999721472
+FailurePredicted              : False
+Protocol                      : SATA
+MediaType                     : HDD
+Manufacturer                  : TOSHIBA
+SerialNumber                  : 38DGK77LF77D
+CapableSpeedGbs               : 6
+NegotiatedSpeedGbs            : 12
+PredictedMediaLifeLeftPercent :
+IndicatorLED                  : Off
+HotspareType                  : None
+StatusIndicator               : OK
+Location                      : {@{Info=Disk0; InfoFormat=DeviceName}}
+DriveID                       : 0
+FirmwareStatus                : Online
+HoursOfPoweredUp              : 6056
+PatrolState                   : DoneOrNotPatrolled
+Position                      : HDDPlane
+RebuildProgress               :
+RebuildState                  : DoneOrNotRebuilt
+SASAddress                    : {500e004aaaaaaa00, 0000000000000000}
+SASSmartInformation           :
+SATASmartInformation          : @{AttributeRevision=; AttributeRevisionNumber=; AttributeItemList=System.Object[]}
+SpareforLogicalDrives         : {}
+TemperatureCelsius            : 33
+Type                          : Disk
+
+This example shows how to get all drives belongs to Storage controller "RAIDStorage0".
+
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
 
@@ -103,7 +152,11 @@ Disconnect-iBMC
   param (
     [RedfishSession[]]
     [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
-    $Session
+    $Session,
+
+    [String[]]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
+    $StorageId
   )
 
   begin {
@@ -112,22 +165,40 @@ Disconnect-iBMC
   process {
     Assert-ArrayNotNull $Session 'Session'
 
+    $StorageIdList = Get-OptionalMatchedSizeArray $Session $StorageId
+
     $Logger.info("Invoke Get iBMC drive resources function")
 
     $ScriptBlock = {
-      param($RedfishSession)
-      $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Get iBMC drive resources now"))
-
-      $GetChassisPath = "/Chassis/$($RedfishSession.Id)"
-      $Chassis = Invoke-RedfishRequest $RedfishSession $GetChassisPath | ConvertFrom-WebResponse
+      param($RedfishSession, $StorageId)
+      $Logger.info($(Trace-Session $RedfishSession "Invoke Get iBMC drive resources now"))
 
       $Drives = New-Object System.Collections.ArrayList
-      $Chassis.Links.Drives | ForEach-Object {
+      if ($null -eq $StorageId) {
+        $GetChassisPath = "/Chassis/$($RedfishSession.Id)"
+        $Chassis = Invoke-RedfishRequest $RedfishSession $GetChassisPath | ConvertFrom-WebResponse
+        $DriveLinkList = $Chassis.Links.Drives
+      } else {
+        # validate whether storage exists
+        $GetStoragesPath = "/Systems/$($RedfishSession.Id)/Storages/$StorageId"
+        $Response = Invoke-RedfishRequest $RedfishSession $GetStoragesPath -ContinueEvenFailed
+        $StatusCode = $Response.StatusCode.value__
+        if ($StatusCode -eq 404) {
+          $ErrorDetail = [String]::Format($(Get-i18n ERROR_STORAGE_ID_NOT_EXISTS), $StorageId)
+          throw "[$($RedfishSession.Address)] $ErrorDetail"
+        }
+
+        $StorageController = $Response | ConvertFrom-WebResponse
+        $DriveLinkList = $StorageController.Drives
+      }
+
+      $DriveLinkList | ForEach-Object {
         $OdataId = $_."@odata.id"
         $Drive = Invoke-RedfishRequest $RedfishSession $OdataId | ConvertFrom-WebResponse
         $CleanUp = $Drive | Clear-OdataProperties | Merge-OemProperties
         [Void] $Drives.Add($(Update-SessionAddress $RedfishSession $CleanUp))
       }
+
       return ,$Drives.ToArray()
     }
 
@@ -136,8 +207,9 @@ Disconnect-iBMC
       $pool = New-RunspacePool $Session.Count
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
+        $_StorageId = $StorageIdList[$idx]
         $Logger.info($(Trace-Session $RedfishSession "Submit Get iBMC drive resources task"))
-        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock @($RedfishSession)))
+        [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock @($RedfishSession, $_StorageId)))
       }
       $Results = Get-AsyncTaskResults $tasks
       return ,$Results

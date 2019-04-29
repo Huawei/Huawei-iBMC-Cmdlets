@@ -23,6 +23,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSNMPSetting -Session $session
 
+Host                : 10.1.1.2
 SnmpV1Enabled       : False
 SnmpV2CEnabled      : False
 SnmpV3Enabled       : True
@@ -68,7 +69,7 @@ Disconnect-iBMC
         "RWCommunityEnabled", "SnmpV3AuthProtocol", "SnmpV3PrivProtocol"
       )
       $Settings = Copy-ObjectProperties $Response $Properties
-      return $Settings
+      return $(Update-SessionAddress $RedfishSession $Settings)
     }
 
     try {
@@ -315,6 +316,7 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSNMPTrapSetting -Session $session
 
+Host               : 10.1.1.2
 ServiceEnabled     : True
 TrapVersion        : V2C
 TrapV3User         : UserName
@@ -361,7 +363,7 @@ Disconnect-iBMC
       )
       $TrapSettings = Copy-ObjectProperties $Response.SnmpTrapNotification $Properties
       $TrapSettings | Add-Member -MemberType NoteProperty "CommunityName" "******"
-      return $TrapSettings
+      return $(Update-SessionAddress $RedfishSession $TrapSettings)
     }
 
     try {
@@ -590,24 +592,28 @@ PS C:\> $credential = Get-Credential
 PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSNMPTrapServer -Session $session
 
+Host              : 10.1.1.2
 MemberId          : 0
 BobEnabled        : False
 Enabled           : False
 TrapServerAddress :
 TrapServerPort    : 300
 
+Host              : 10.1.1.2
 MemberId          : 1
 BobEnabled        : False
 Enabled           : True
 TrapServerAddress : 192.168.2.8
 TrapServerPort    : 310
 
+Host              : 10.1.1.2
 MemberId          : 2
 BobEnabled        : False
 Enabled           : False
 TrapServerAddress : 192.168.2.7
 TrapServerPort    : 163
 
+Host              : 10.1.1.2
 MemberId          : 3
 BobEnabled        : True
 Enabled           : True
@@ -646,7 +652,14 @@ Disconnect-iBMC
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Get iBMC SNMP Trap Servers now"))
       $Path = "/Managers/$($RedfishSession.Id)/SnmpService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
-      return ,$Response.SnmpTrapNotification.TrapServer
+
+      $Results = New-Object System.Collections.ArrayList
+      for ($idx = 0; $idx -lt $Response.SnmpTrapNotification.TrapServer.Count; $idx++) {
+        $TrapServer = $Response.SnmpTrapNotification.TrapServer[$idx]
+        $TrapServer = Update-SessionAddress $RedfishSession $TrapServer
+        [Void]  $Results.Add($TrapServer)
+      }
+      return , $Results.ToArray()
     }
 
     try {

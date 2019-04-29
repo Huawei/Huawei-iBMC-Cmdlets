@@ -12,7 +12,7 @@
   RootModule             = 'Huawei-iBMC-Cmdlets.psm1'
 
   # Version number of this module.
-  ModuleVersion          = '1.1.0'
+  ModuleVersion          = '1.2.0'
 
   # Supported PSEditions
   # CompatiblePSEditions = @()
@@ -30,9 +30,9 @@
   Copyright              = '(c) 2018 Huawei Technologies Co., Ltd. All rights reserved.'
 
   # Description of the functionality provided by this module
-  Description            = 'Huawei iBMC cmdlets provide powershell Cmdlets to manage iBMC Redfish devices.
+  Description            = 'Huawei iBMC cmdlets provide powershell Cmdlets to manage iBMC using Redfish API.
 These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
-Support devices include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5, CH121 V3, CH242 V3, XH622 V3.'
+Support HUAWEI server model include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5, CH121 V3, CH242 V3, XH622 V3, XH321 V5.'
 
   # Minimum version of the Windows PowerShell engine required by this module
   PowerShellVersion      = '5.0'
@@ -71,7 +71,7 @@ Support devices include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2
   # NestedModules = @()
 
   # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-  # FunctionsToExport = '*-iBMC*'
+  FunctionsToExport      = '*-iBMC*'
 
   # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
   CmdletsToExport        = '*'
@@ -103,9 +103,10 @@ Support devices include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2
     "common/Types.ps1",
     "scripts/AssetTag.ps1",
     "scripts/BIOS-Settings.ps1",
+    "scripts/Boot.ps1",
     "scripts/Connection.ps1",
     "scripts/CPU.ps1",
-    "scripts/Deploy.ps1",
+    "scripts/VirtualMedia.ps1",
     "scripts/Drive.ps1",
     "scripts/Fan.ps1",
     "scripts/Firmware.ps1",
@@ -145,7 +146,23 @@ Support devices include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2
       # IconUri = ''
 
       # ReleaseNotes of this module
-      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.1.0'
+      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.2.0
+
+April, 2019
+
+Enhancements
+- Mixin host address with all cmdlet return items.
+- Add progress log for rsync tasks.
+- Optimize help document for Set-iBMCSessionTimeout, Add-iBMCVolume cmdlet
+- Add RAID filter support for get-ibmcdrives cmdlet
+- Add Drives property for get-iBMCRAIDControllers cmdlet
+
+Features:
+- License module
+- Smart Provisioning OS deploy module
+
+User guide:
+https://github.com/Huawei/Huawei-iBMC-Cmdlets/tree/master/docs'
 
     } # End of PSData hashtable
 

@@ -14,6 +14,7 @@ $bundle = Data {
   FAIL_TO_MODIFY_ALL = Failure: Fail to apply all submit settings, got failures:
   FAIL_NO_LINKUP_INTERFACE = Failure: No LinkUp state Ethernet Interfaces found.
   FAIL_SP_NOT_SUPPORT = Failure: SP Service is not supported on this server.
+  FAIL_SP_DEPLOY_SUPPORT = Failure: SP OS deployment is not supported on this server.
   FAIL_SP_FILE_TRANSFER = Failure: Transfer update firmware file to SP timeout.
   FAIL_SP_RESET_SYSTEM = Failure: Failed to restart computer system.
   FAIL_SIGNAL_URI_REQUIRED = Failure: Signal Uri is required when upgrade firmware.
@@ -42,6 +43,8 @@ $bundle = Data {
   ERROR_STORAGE_ID_NOT_EXISTS = Error: Could not find storage with Id "{0}".
   ERROR_EXPORT_TO_SAME_NFS = Error: Should not export to a same file for multiple server.
   ERROR_INVAIL_SENSITIVE_STRING = Error: Parameter "{0}" should be a String or SecureString.
+  ERROR_FILE_NOT_EXISTS = Error: File path "{0}" does not exists.
+  ERROR_FILE_NOT_JSON_FORMAT = Error: File content of "{0}" is not in JSON format.
 '@
 }
 

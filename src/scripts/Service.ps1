@@ -27,6 +27,7 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $Services = Get-iBMCServices $session
 PS C:\> $Services
 
+Host          : 10.1.1.2
 HTTP          : @{ProtocolEnabled=True; Port=80}
 HTTPS         : @{ProtocolEnabled=True; Port=443}
 SNMP          : @{ProtocolEnabled=True; Port=161}
@@ -73,7 +74,7 @@ Disconnect-iBMC
       $Services | Add-Member -MemberType NoteProperty "VNC" $Response.Oem.Huawei.VNC
       $Services | Add-Member -MemberType NoteProperty "Video" $Response.Oem.Huawei.Video
       $Services | Add-Member -MemberType NoteProperty "NAT" $Response.Oem.Huawei.NAT
-      return $Services
+      return $(Update-SessionAddress $RedfishSession $Services)
     }
 
     try {
