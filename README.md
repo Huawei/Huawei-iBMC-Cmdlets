@@ -1,16 +1,15 @@
 # Huawei iBMC Cmdlets
 
-
 ## Description
 
-    Huawei iBMC cmdlets provide cmdlets to quick access iBMC Redfish devices.  
-    These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
+Huawei iBMC cmdlets provide powershell Cmdlets to manage iBMC using Redfish API.
+These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
 
 ## Supported Device
 
-    Huawei Blade Server:        CH121 V3, CH242 V3  
-    Huawei Rack Server:         1288H V5, 2288H V5, 2288 V5, 2488H V5，RH1288 V3, RH2288 V3, RH2288H V3   
-    Huawei High-density Server: XH622 V3, XH321 V5
+Huawei Blade Server:        RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5
+Huawei Rack Server:         CH121 V3, CH242 V3
+Huawei High-density Server: XH622 V3, XH321 V5
 
 ## Requirements
 
@@ -22,12 +21,12 @@
 
 ## Install
 
-- Online installation  
+- Online installation
 
   ```powershell
   Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.2.0
   ```
-- Local installation  
+- Local installation
 
   1、Decompress the Huawei-iBMC-Cmdlets v1.2.0.zip software packages to obtaion the Huawei-iBMC-Cmdlets folder  
   2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory  
@@ -48,6 +47,7 @@ PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -Trust
 PS C:\> $Users = Get-iBMCUser -Session $session
 PS C:\> $Users
 
+Host     : 10.1.1.2
 Id       : 2
 Name     : User Account
 UserName : Administrator
@@ -56,6 +56,7 @@ Locked   : False
 Enabled  : True
 Oem      : @{Huawei=}
 
+Host     : 10.1.1.2
 Id       : 3
 Name     : User Account
 UserName : root
@@ -81,4 +82,4 @@ PS C:\> get-help Connect-iBMC -Full
 
 ## Open Source Software Notice
 
-    https://github.com/Huawei/Huawei-iBMC-Cmdlets/Open_Source_Software_Notice.xlsx
+    https://github.com/Huawei/Huawei-iBMC-Cmdlets/tree/master/docs/Open_Source_Software_Notice.xlsx
