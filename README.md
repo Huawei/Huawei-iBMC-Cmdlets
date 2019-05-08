@@ -82,4 +82,4 @@ PS C:\> get-help Connect-iBMC -Full
 
 ## Open Source Software Notice
 
-    https://github.com/Huawei/Huawei-iBMC-Cmdlets/tree/master/docs/Open_Source_Software_Notice.xlsx
+    https://github.com/Huawei/Huawei-iBMC-Cmdlets/blob/master/docs/Open_Source_Software_Notice.doc
