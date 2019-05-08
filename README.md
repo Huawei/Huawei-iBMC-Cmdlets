@@ -7,9 +7,9 @@ These cmdlets contains the most commonly used features such as: information quer
 
 ## Supported Device
 
-Huawei Blade Server:        RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5
-Huawei Rack Server:         CH121 V3, CH242 V3
-Huawei High-density Server: XH622 V3, XH321 V5
+    Huawei Blade Server:        RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5
+    Huawei Rack Server:         CH121 V3, CH242 V3
+    Huawei High-density Server: XH622 V3, XH321 V5
 
 ## Requirements
 
