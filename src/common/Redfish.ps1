@@ -1,3 +1,12 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
 <# NOTE: A Redfish Client PowerShell scripts. #>
 
 # . $PSScriptRoot/Common.ps1
@@ -81,7 +90,7 @@ RootData     : @{@odata.context=/redfish/v1/$metadata#ServiceRoot/; @odata.id=/r
 
 .EXAMPLE
 PS C:\> $credential = Get-Credential
-PS C:\> $session = New-RedfishSession -Address 192.184.217.212 -Credential $credential
+PS C:\> $session = New-RedfishSession -Address 10.1.1.2 -Credential $credential
 PS C:\> $session | fl
 
 RootUri      : https://10.1.1.2/redfish/v1/

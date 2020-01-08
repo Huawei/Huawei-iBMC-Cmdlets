@@ -24,11 +24,11 @@ These cmdlets contains the most commonly used features such as: information quer
 - Online installation
 
   ```powershell
-  Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.2.0
+  Install-Module -Name Huawei-iBMC-Cmdlets -RequiredVersion 1.3.0
   ```
 - Local installation
 
-  1、Decompress the Huawei-iBMC-Cmdlets v1.2.0.zip software packages to obtaion the Huawei-iBMC-Cmdlets folder  
+  1、Decompress the Huawei-iBMC-Cmdlets v1.3.0.zip software packages to obtaion the Huawei-iBMC-Cmdlets folder  
   2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory  
   3、Run the following command to install Huawei-iBMC-Cmdlets:  
   

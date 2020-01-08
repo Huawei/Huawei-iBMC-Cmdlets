@@ -1,3 +1,12 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
 <# NOTE: iBMC Systems module Cmdlets #>
 
 function Get-iBMCSystemInfo {
@@ -153,10 +162,10 @@ PermanentMACAddress : 04:88:5F:D4:C6:52
 MACAddress          : 04:88:5F:D4:C6:52
 LinkStatus          : LinkUp
 IPv4Addresses       : {@{Address=10.1.1.20; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=}}
-IPv6Addresses       : {@{Address=2017::d5a; PrefixLength=64; AddressOrigin=SLAAC; AddressState=},
-                      @{Address=2017::d5a;PrefixLength=64; AddressOrigin=SLAAC; AddressState=},
-                      @{Address=fe80::4a57:2ff:feab:d5a; PrefixLength=64; AddressOrigin=Static; AddressState=}}
-IPv6DefaultGateway  : fe80::525d:acff:feed:5c27
+IPv6Addresses       : {@{Address=fe80::20; PrefixLength=10; AddressOrigin=SLAAC; AddressState=},
+                      @{Address=fe80::21;PrefixLength=10; AddressOrigin=SLAAC; AddressState=},
+                      @{Address=fe80::22; PrefixLength=10; AddressOrigin=Static; AddressState=}}
+IPv6DefaultGateway  : fe80::1
 InterfaceType       : Physical
 BandwidthUsage      : 0
 BDF                 : 0000:1a:00.0

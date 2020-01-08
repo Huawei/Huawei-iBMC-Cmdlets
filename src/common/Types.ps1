@@ -1,3 +1,14 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
+<# NOTE: A PowerShell type definition implementation. #>
+
 try { [ResetType] | Out-Null } catch {
   Add-Type -TypeDefinition @'
     public enum ResetType {
@@ -352,6 +363,77 @@ try { [LicenseSource] | Out-Null } catch {
       iBMC,
       FusionDirector,
       eSight
+    }
+'@
+}
+
+try { [IPVersion] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum IPVersion {
+      IPv4,
+      IPv6,
+      IPv4AndIPv6
+    }
+'@
+}
+
+try { [IPv4AddressOrigin] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum IPv4AddressOrigin {
+      Static,
+      DHCP
+    }
+'@
+}
+
+try { [IPv6AddressOrigin] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum IPv6AddressOrigin {
+      Static,
+      DHCPv6
+    }
+'@
+}
+
+try { [CertificateVerificationLevel] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum CertificateVerificationLevel {
+      Demand,
+      Allow
+    }
+'@
+}
+
+try { [GroupLoginRole] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum GroupLoginRole {
+      Rule1,
+      Rule2,
+      Rule3
+    }
+'@
+}
+
+try { [GroupLoginInterface] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum GroupLoginInterface {
+      Web,
+      SSH,
+      Redfish
+    }
+'@
+}
+
+try { [LDAPGroupRole] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum LDAPGroupRole {
+      Administrator,
+      Operator,
+      Commonuser,
+      CustomRole1,
+      CustomRole2,
+      CustomRole3,
+      CustomRole4
     }
 '@
 }

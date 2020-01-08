@@ -1,3 +1,12 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
 <# NOTE: iBMC Connect module Cmdlets #>
 
 function Connect-iBMC {
@@ -65,25 +74,25 @@ PS C:\> $sessions
 
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address 2018::2018 -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address fe80::2019 -Username root -Password password
 PS C:\> $sessions
 
 This example shows how to connect to a bmc server using ipv6
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address "[2018::2018]:8080" -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address "[fe80::2019]:8080" -Username root -Password password
 PS C:\> $sessions
 
 This example shows how to connect to a bmc server using ipv6 and port
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address "2018::2018,201A" -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address "fe80::2018,2019" -Username root -Password password
 PS C:\> $sessions
 
 This example shows how to connect to multiple bmc server using "," seperated ipv6 addresses
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address "2018::2018-201A" -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address "fe80::2018-2019" -Username root -Password password
 PS C:\> $sessions
 
 This example shows how to connect to multiple bmc server using "-" seperated ipv6 addresses

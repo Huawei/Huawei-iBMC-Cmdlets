@@ -1,3 +1,14 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
+<# NOTE: A PowerShell internationalization implementation. #>
+
 $bundle = Data {
   #culture="en-US"
   ConvertFrom-StringData @'
@@ -45,6 +56,13 @@ $bundle = Data {
   ERROR_INVAIL_SENSITIVE_STRING = Error: Parameter "{0}" should be a String or SecureString.
   ERROR_FILE_NOT_EXISTS = Error: File path "{0}" does not exists.
   ERROR_FILE_NOT_JSON_FORMAT = Error: File content of "{0}" is not in JSON format.
+  ERROR_IPV4_ADDRESS_INVALID = Error: The IPv4 address is invalid.
+  ERROR_IPV4_SUBNETMASK_INVALID = Error: The IPv4 subnet mask is invalid.
+  ERROR_IPV4_GATEWAY_INVALID = Error: The IPv4 gateway is invalid.
+  ERROR_IPV6_ADDRESS_INVALID = Error: The IPv6 address is invalid.
+  ERROR_IPV6_GATEWAY_INVALID = Error: The IPv6 gateway is invalid.
+  ERROR_LDAP_GROUPID_INVALID = Error: The LDAP Group ID should not be null or empty.
+  ERROR_LDAP_GROUPINFO_INVALID = Error: The LDAP Group Info should not be null or empty.
 '@
 }
 

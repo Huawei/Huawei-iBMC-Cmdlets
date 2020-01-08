@@ -1,3 +1,12 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
 <# NOTE: iBMC Syslog Module Cmdlets #>
 
 function Get-iBMCSyslogSetting {
@@ -470,7 +479,7 @@ Disconnect-iBMC
       $pool = New-RunspacePool $Session.Count
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
-        $MemberId = $MemberIds[$idx];
+        $_MemberId = $MemberIds[$idx];
         $Payload = @{
           Enabled = $Enableds[$idx];
           Address = $Addresses[$idx];
@@ -482,7 +491,7 @@ Disconnect-iBMC
           throw $(Get-i18n ERROR_NO_UPDATE_PAYLOAD)
         }
 
-        $Parameters = @($RedfishSession, $MemberId, $Payload)
+        $Parameters = @($RedfishSession, $_MemberId, $Payload)
         $Logger.info($(Trace-Session $RedfishSession "Submit Set BMC Syslog Notification Server task"))
         [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
       }

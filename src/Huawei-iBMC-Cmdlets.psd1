@@ -1,3 +1,12 @@
+# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# This program is free software; you can redistribute it and/or modify 
+# it under the terms of the MIT License		
+
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MIT License for more detail
+
 #
 # Module manifest for module 'Huawei-iBMC-Cmdlets'
 #
@@ -12,7 +21,7 @@
   RootModule             = 'Huawei-iBMC-Cmdlets.psm1'
 
   # Version number of this module.
-  ModuleVersion          = '1.2.0'
+  ModuleVersion          = '1.3.0'
 
   # Supported PSEditions
   # CompatiblePSEditions = @()
@@ -125,7 +134,8 @@ Support HUAWEI server model include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5,
     "scripts/Syslog.ps1",
     "scripts/System.ps1",
     "scripts/User.ps1",
-    "scripts/Volume.ps1"
+    "scripts/Volume.ps1",
+    "scripts/LDAP.ps1"
   )
 
   # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
@@ -146,20 +156,13 @@ Support HUAWEI server model include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5,
       # IconUri = ''
 
       # ReleaseNotes of this module
-      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.2.0
+      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.3.0
 
-April, 2019
-
-Enhancements
-- Mixin host address with all cmdlet return items.
-- Add progress log for rsync tasks.
-- Optimize help document for Set-iBMCSessionTimeout, Add-iBMCVolume cmdlet
-- Add RAID filter support for get-ibmcdrives cmdlet
-- Add Drives property for get-iBMCRAIDControllers cmdlet
+December, 2019
 
 Features:
-- License module
-- Smart Provisioning OS deploy module
+- LDAP module
+- iBMC IP module
 
 User guide:
 https://github.com/Huawei/Huawei-iBMC-Cmdlets/tree/master/docs'
