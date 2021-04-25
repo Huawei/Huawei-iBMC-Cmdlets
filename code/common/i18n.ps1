@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -16,6 +16,8 @@ $bundle = Data {
   MSG_PROGRESS_PERCENT = Percent Complete
   MSG_PROGRESS_COMPLETE = Task Complete
   MSG_PROGRESS_FAILED = Task Failed
+  MSG_ENTER_ACCOUNT = Please enter account username and password.
+  MSG_REENTER_ACCOUNT = Please reenter account password.
 
   FAIL_NO_USER_WITH_NAME_EXISTS = Failure: No user with name "{0}" exists
   FAIL_NO_UPDATE_PARAMETER = Failure: at least one update parameter must be set
@@ -64,6 +66,9 @@ $bundle = Data {
   ERROR_IPV6_GATEWAY_INVALID = Error: The IPv6 gateway is invalid.
   ERROR_LDAP_GROUPID_INVALID = Error: The LDAP Group ID should not be null or empty.
   ERROR_LDAP_GROUPINFO_INVALID = Error: The LDAP Group Info should not be null or empty.
+  ERROR_INVALID_PARAMETERS = Error: Correct the argument and try again.
+  ERROR_INVALID_CHARACTER = Error: Input contains invalid special charactor, Correct the input and try again.
+  ERROR_PASSWORD_DIFFERENT = Error: passwords entered are different.
 '@
 }
 

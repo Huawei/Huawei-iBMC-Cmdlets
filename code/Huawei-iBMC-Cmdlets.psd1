@@ -21,7 +21,7 @@
   RootModule             = 'Huawei-iBMC-Cmdlets.psm1'
 
   # Version number of this module.
-  ModuleVersion          = '1.3.1'
+  ModuleVersion          = '1.3.3'
 
   # Supported PSEditions
   # CompatiblePSEditions = @()
@@ -156,7 +156,7 @@ Support HUAWEI server model include: RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5,
       # IconUri = ''
 
       # ReleaseNotes of this module
-      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.3.1
+      ReleaseNotes = 'Huawei-iBMC-Cmdlets - Version 1.3.3
 
 April, 2020
 

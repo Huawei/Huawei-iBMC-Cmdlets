@@ -4,8 +4,8 @@ current_path=`pwd`
 cmdlets_path=$(dirname "$PWD")
 
 cd "${cmdlets_path}/open_source/log4net"
-unzip log4net*.zip
-cp log4net*/bin/net/4.5/release/log4net.dll ${cmdlets_path}/code/common/
+unzip apache-log4net*.zip
+cp net45/log4net.dll ${cmdlets_path}/code/common/
 
 cd "${cmdlets_path}"
 mkdir Huawei-iBMC-Cmdlets

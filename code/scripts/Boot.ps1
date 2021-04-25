@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.	
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -29,17 +29,17 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Sequence = Get-iBMCBootupSequence $session
 PS C:\> $Sequence
 
 Host           BootupSequence
 ----           --------------
-10.1.1.2       {Pxe, HDD, Cd, Others}
+192.168.1.1       {Pxe, HDD, Cd, Others}
 
 PS C:\> $Sequence | fl
 
-Host           : 10.1.1.2
+Host           : 192.168.1.1
 BootupSequence : {Pxe, HDD, Cd, Others}
 
 .LINK
@@ -144,7 +144,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $BootUpSequence = ,@('Pxe', 'Hdd', 'Cd', 'Others')
 PS C:\> Set-iBMCBootupSequence $session $BootUpSequence
 
@@ -153,7 +153,7 @@ Set boot up device sequence for single iBMC server
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2,10.1.1.3 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1,192.168.1.3 -Credential $credential -TrustCert
 PS C:\> $BootUpSequence = @(@('Pxe', 'Hdd', 'Cd', 'Others'), @('Cd', 'Pxe', 'Hdd', 'Others'))
 PS C:\> Set-iBMCBootupSequence $session $BootUpSequence
 
@@ -267,10 +267,10 @@ Disconnect-iBMC
 function Get-iBMCBootSourceOverride {
 <#
 .SYNOPSIS
-Query bios boot source override target.
+Query bios boot source override target, enable status, mode.
 
 .DESCRIPTION
-Query bios boot source override target. Boot up device contains: 'None', 'Pxe', 'Floppy', 'Cd', 'Hdd', 'BiosSetup'.
+Query bios boot source override target, enable status, mode.
 
 .PARAMETER Session
 iBMC redfish session object which is created by Connect-iBMC cmdlet.
@@ -284,19 +284,21 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $BootSourceOverride = Get-iBMCBootSourceOverride $session
 PS C:\> $BootSourceOverride
 
-Host     BootSourceOverrideTarget BootSourceOverrideEnabled
-----     ------------------------ -------------------------
-10.1.1.2 None                     Disabled
+Host         BootSourceOverrideTarget BootSourceOverrideEnabled BootSourceOverrideMode
+----         ------------------------ ------------------------- ----------------------
+192.168.1.1     None                     Disabled                  UEFI
+
 
 PS C:\> $BootSourceOverride | fl
 
-Host                      : 10.1.1.2
+Host                      : 192.168.1.1
 BootSourceOverrideTarget  : None
 BootSourceOverrideEnabled : Disabled
+BootSourceOverrideMode    : UEFI
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -325,11 +327,11 @@ Disconnect-iBMC
 
     $ScriptBlock = {
       param($RedfishSession)
-      $(Get-Logger).info($(Trace-Session $RedfishSession "Get boot source override target now"))
+      $(Get-Logger).info($(Trace-Session $RedfishSession "Get boot source override now"))
       $Path = "/redfish/v1/Systems/$($RedfishSession.Id)"
       $Response = $(Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse)
       $Properties = @(
-        "BootSourceOverrideTarget", "BootSourceOverrideEnabled"
+        "BootSourceOverrideTarget", "BootSourceOverrideEnabled", "BootSourceOverrideMode"
       )
       $BootSourceOverride = Copy-ObjectProperties $Response.Boot $Properties
       return $(Update-SessionAddress $RedfishSession $BootSourceOverride)
@@ -360,11 +362,10 @@ Disconnect-iBMC
 function Set-iBMCBootSourceOverride {
 <#
 .SYNOPSIS
-Modify bios boot source override target.
+Modify bios boot source override target, enable status and mode.
 
 .DESCRIPTION
-Modify bios boot source override target.
-Available boot source override target: 'None', 'Pxe', 'Floppy', 'Cd', 'Hdd', 'BiosSetup'.
+Modify bios boot source override target, enable status and mode.
 This boot source override target takes effect upon the next restart of the system.
 
 .PARAMETER Session
@@ -373,6 +374,15 @@ A session object identifies an iBMC server to which this cmdlet will be executed
 
 .PARAMETER BootSourceOverrideTarget
 BootSourceOverrideTarget specifies the bios boot source override target
+Available boot source override target: 'None', 'Pxe', 'Floppy', 'Cd', 'Hdd', 'BiosSetup'.
+
+.PARAMETER BootSourceOverrideEnabled
+BootSourceOverrideEnabled specifies the bios boot source override enable status
+Available boot source override enable status: 'Disabled', 'Once', 'Continuous'.
+
+.PARAMETER BootSourceOverrideMode
+BootSourceOverrideMode specifies the bios boot source override mode
+Available boot source override mode: 'Legacy', 'UEFI'.
 
 .OUTPUTS
 Null
@@ -382,17 +392,17 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> Set-iBMCBootSourceOverride $session 'Pxe' 'Once'
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> Set-iBMCBootSourceOverride $session 'Pxe' 'Once' 'UEFI'
 
 Set boot source override target for single iBMC server
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2,10.1.1.5 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1,192.168.1.5 -Credential $credential -TrustCert
 PS C:\> Set-iBMCBootSourceOverride -Session $session -BootSourceOverrideTarget Pxe `
-          -BootSourceOverrideEnabled Once
+          -BootSourceOverrideEnabled Once -BootSourceOverrideMode UEFI
 
 Set boot source override target for multiple iBMC server
 
@@ -414,12 +424,16 @@ Disconnect-iBMC
     $Session,
 
     [BootSourceOverrideTarget[]]
-    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
     $BootSourceOverrideTarget,
 
     [BootSourceOverrideEnabled[]]
-    [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 2)]
-    $BootSourceOverrideEnabled
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 2)]
+    $BootSourceOverrideEnabled,
+
+    [BootSourceOverrideMode[]]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 3)]
+    $BootSourceOverrideMode
   )
 
   begin {
@@ -427,23 +441,18 @@ Disconnect-iBMC
 
   process {
     Assert-ArrayNotNull $Session 'Session'
-    Assert-ArrayNotNull $BootSourceOverrideTarget 'BootSourceOverrideTarget'
-    $BootSourceOverrideTargetList = Get-MatchedSizeArray $Session $BootSourceOverrideTarget 'Session' 'BootSourceOverrideTarget'
-    $BootSourceOverrideEnabledList = Get-MatchedSizeArray $Session $BootSourceOverrideEnabled 'Session' 'BootSourceOverrideEnabled'
 
-    $Logger.info("Invoke Set Bootup Sequence function")
+    $BootSourceOverrideTargetList = Get-OptionalMatchedSizeArray $Session $BootSourceOverrideTarget
+    $BootSourceOverrideEnabledList = Get-OptionalMatchedSizeArray $Session $BootSourceOverrideEnabled
+    $BootSourceOverrideModeList = Get-OptionalMatchedSizeArray $Session $BootSourceOverrideMode
+
+    $Logger.info("Invoke Set Boot Source Override function")
 
     $ScriptBlock = {
-      param($RedfishSession, $BootSourceOverrideTarget, $BootSourceOverrideEnabled)
-      $(Get-Logger).info($(Trace-Session $RedfishSession "Set boot source override target: $BootSourceOverrideTarget, $BootSourceOverrideEnabled"))
+      param($RedfishSession, $Payload)
+      $(Get-Logger).info($(Trace-Session $RedfishSession "Set boot source override now"))
       $Path = "/redfish/v1/Systems/$($RedfishSession.Id)"
-      $Payload = @{
-        "Boot" = @{
-          "BootSourceOverrideTarget" = $BootSourceOverrideTarget.toString();
-          "BootSourceOverrideEnabled" = $BootSourceOverrideEnabled.toString();
-        };
-      }
-
+      
       $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Payload | ConvertTo-Json)"))
       Invoke-RedfishRequest $RedfishSession $Path 'PATCH' $Payload | Out-Null
       return $null
@@ -454,7 +463,20 @@ Disconnect-iBMC
       $pool = New-RunspacePool $Session.Count
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
-        $Parameters = @($RedfishSession, $BootSourceOverrideTargetList[$idx], $BootSourceOverrideEnabledList[$idx])
+        $BootPayload = @{
+            "BootSourceOverrideTarget" = $BootSourceOverrideTargetList[$idx];
+            "BootSourceOverrideEnabled" = $BootSourceOverrideEnabledList[$idx];
+            "BootSourceOverrideMode" = $BootSourceOverrideModeList[$idx]   
+        } | Remove-EmptyValues | Resolve-EnumValues
+
+        if ($BootPayload.Count -eq 0) {
+            throw $(Get-i18n ERROR_NO_UPDATE_PAYLOAD)
+        }
+
+        $Payload = @{}
+        $Payload.Boot = $BootPayload
+
+        $Parameters = @($RedfishSession, $Payload)
         $Logger.info($(Trace-Session $RedfishSession "Submit Set Boot source override target task"))
         [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
       }

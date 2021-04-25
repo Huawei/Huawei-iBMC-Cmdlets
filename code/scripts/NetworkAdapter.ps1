@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $NetworkAdaptersArray = Get-iBMCNetworkAdapters -Session $session
 PS C:\> $NetworkAdaptersArray
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 Id                : mainboardLOM
 Manufacturer      : Intel
 Model             : X722
@@ -55,7 +55,7 @@ NetworkPorts      : {@{Name=1; Id=1; PhysicalPortNumber=1; LinkStatus=Down; Asso
                     kageVersion=; DriverVersion=; DriverName=}, @{Name=4; Id=4; PhysicalPortNumber=4; LinkStatus=Down; AssociatedNetworkAddresses=System.Ob
                     ject[]; PortType=ElectricalPort; BDF=0000:1a:00.3; FirmwarePackageVersion=; DriverVersion=; DriverName=}}
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 Id                : mainboardMEZZ1
 Manufacturer      : Intel
 Model             : 2*82599
@@ -165,11 +165,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCNetworkAdaptersHealth -Session $session
 PS C:\> $health | fl
 
-Host            : 10.1.1.2
+Host            : 192.168.1.1
 Summary         : @{HealthRollup=OK}
 ID#mainboardLOM : @{Health=OK; State=Enabled; Name=mainboardLOM}
 

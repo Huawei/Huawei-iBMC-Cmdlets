@@ -30,11 +30,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $RAID = Get-iBMCRAIDControllers -Session $Session
 PS C:\> $RAID
 
-Host                     : 10.1.1.2
+Host                     : 192.168.1.1
 Id                       : RAIDStorage0
 Name                     : RAID Card1 Controller
 Description              : RAID Controller
@@ -162,11 +162,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCRAIDControllersHealth -Session $session
 PS C:\> $health | fl
 
-Host            : 10.1.1.2
+Host            : 192.168.1.1
 Summary         : @{HealthRollup=OK}
 ID#RAIDStorage0 : @{Health=OK; State=Enabled; Name=RAID Card1 Controller}
 ID#RAIDStorage1 : @{Health=OK; State=Enabled; Name=PCIe Card 5 (RAID) Controller}
@@ -278,7 +278,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCRAIDController -Session $session -StorageId RAIDStorage0 `
           -CopyBackEnabled $true -SmarterCopyBackEnabled $true -JBODEnabled $true
 
@@ -415,7 +415,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Restore-iBMCRAIDController -Session $Session -StorageId RAIDStorage0
 
 .LINK

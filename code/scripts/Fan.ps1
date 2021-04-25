@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $FansArray = Get-iBMCFans -Session $session
 PS C:\> $FansArray
 
-Host                      : 10.1.1.2
+Host                      : 192.168.1.1
 MemberId                  : 0
 Name                      : Fan Module1 Front
 Reading                   : 4920
@@ -51,7 +51,7 @@ PartNumber                : 02311VSF
 Position                  : chassis
 SpeedRatio                : 32
 
-Host                      : 10.1.1.2
+Host                      : 192.168.1.1
 MemberId                  : 1
 Name                      : Fan Module2 Front
 Reading                   : 4800
@@ -147,11 +147,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCFansHealth -Session $session
 PS C:\> $health | fl
 
-Host       : 10.1.1.2
+Host       : 192.168.1.1
 Summary    : @{HealthRollup=OK}
 MemberId#0 : @{Health=OK; State=Enabled; Name=Fan Module1 Front}
 MemberId#1 : @{Health=OK; State=Enabled; Name=Fan Module2 Front}

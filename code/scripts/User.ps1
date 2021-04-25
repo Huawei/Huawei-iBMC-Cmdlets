@@ -43,6 +43,10 @@ Available role value set is:
 - "CustomRole3"
 - "CustomRole4"
 
+.PARAMETER SecureEnabled
+switch to turn on GUI for retrieving account username and password.
+Note: this features does not provide different username and password for different servers.
+
 .OUTPUTS
 PSObject[]
 Returns the new created User object array if cmdlet executes successfully.
@@ -53,12 +57,12 @@ In case of an error or warning, exception will be returned.
 Create a new user with name "new-user" for a single iBMC server
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $pwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> $User = Add-iBMCUser -Session $session -Username new-user -Password $pwd -Role Operator
 PS C:\> $User
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -73,11 +77,11 @@ Create a new user with name "new-user" for a single iBMC server with pipelined s
 
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.10.10.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.10.2 -Credential $credential -TrustCert
 PS C:\> $pwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> ,$session | Add-iBMCUser -Username new-user -Password $pwd -Role Operator
 
-Host     : 10.1.1.2
+Host     : 192.168.10.2
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -88,14 +92,32 @@ Oem      : @{Huawei=}
 
 .EXAMPLE
 
+Create a new user with name "new-user" for a single iBMC server with SecureEnabled
+
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 192.168.10.2 -Credential $credential -TrustCert
+PS C:\> Add-iBMCUser -Session $session -Role Commonuser -SecureEnabled
+
+Host     : 192.168.10.2
+Id       : 6
+Name     : User Account
+UserName : new-user
+RoleId   : Commonuser
+Locked   : False
+Enabled  : True
+Oem      : @{Huawei=}
+
+.EXAMPLE
+
 Create a new user with name "new-user" for multiple iBMC servers with pipelined session
 
 PS C:\> $credential = Get-Credential
-PS C:\> $sessions = Connect-iBMC -Address 10.10.10.2-3 -Credential $credential -TrustCert
+PS C:\> $sessions = Connect-iBMC -Address 192.168.10.2-3 -Credential $credential -TrustCert
 PS C:\> $pwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> ,$sessions | Add-iBMCUser -Username new-user,new-user2 -Password $pwd,$pwd -Role Operator,Administrator
 
-Host     : 10.1.1.2
+Host     : 192.168.10.2
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -104,7 +126,7 @@ Locked   : True
 Enabled  : True
 Oem      : @{Huawei=}
 
-Host     : 10.1.1.3
+Host     : 192.168.10.3
 Id       : 12
 Name     : User Account
 UserName : new-user
@@ -129,16 +151,20 @@ Disconnect-iBMC
     $Session,
 
     [string[]]
-    [parameter(Mandatory = $true, Position=1)]
+    [parameter(Mandatory = $false, Position=1)]
     $Username,
 
     [System.Object[]]
-    [parameter(Mandatory = $true, Position=2)]
+    [parameter(Mandatory = $false, Position=2)]
     $Password,
 
     [UserRole[]]
     [parameter(Mandatory = $true, Position=3)]
-    $Role
+    $Role,
+
+    [switch]
+    [parameter(Mandatory = $false)]
+    $SecureEnabled
   )
 
   begin {
@@ -146,13 +172,19 @@ Disconnect-iBMC
 
   process {
     Assert-ArrayNotNull $Session 'Session'
-    Assert-ArrayNotNull $Username 'Username'
-    Assert-ArrayNotNull $Password 'Password'
+    if ($SecureEnabled) {
+      $Account = Get-AccountInfo  
+      $Username = @($Account[0])
+      $Password = @($Account[1])
+    } else {
+      Assert-ArrayNotNull $Username 'Username'
+      Assert-ArrayNotNull $Password 'Password'
+    }
     Assert-ArrayNotNull $Role 'Role'
 
-    $UsernameList = Get-MatchedSizeArray $Session $Username 'Session' 'Username'
-    $PasswordList = Get-MatchedSizeArray $Session $Password 'Session' 'Password'
     $RoleList = Get-MatchedSizeArray $Session $Role 'Session' 'Role'
+    $UsernameList = Get-OptionalMatchedSizeArray $Session $Username
+    $PasswordList = Get-OptionalMatchedSizeArray $Session $Password
 
     $AddUserBlock = {
       param($Session, $Username, $SecurePasswd, $Role)
@@ -215,11 +247,11 @@ Get all user account infomation for multiple iBMC servers
 
 
 PS C:\> $credential = Get-Credential
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2-3 -Credential $credential -TrustCert
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1-3 -Credential $credential -TrustCert
 PS C:\> $Users = Get-iBMCUser -Session $sessions
 PS C:\> $Users
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 Id       : 2
 Name     : User Account
 UserName : Administrator
@@ -228,7 +260,7 @@ Locked   : False
 Enabled  : True
 Oem      : @{Huawei=}
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 Id       : 3
 Name     : User Account
 UserName : root
@@ -237,7 +269,7 @@ Locked   : True
 Enabled  : True
 Oem      : @{Huawei=}
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 Id       : 4
 Name     : User Account
 UserName : zxh
@@ -349,6 +381,10 @@ Enabled specifies Whether the user is enabled. A power shell bool($true|$false) 
 If this switch parameter is $true then the modified user's lockout status is set to false.
 If this switch parameter is $false then lockout status will not be modified.
 
+.PARAMETER SecureEnabled
+switch to turn on GUI for retrieving account username and password.
+Note: this features does not provide different username and password for different servers.
+
 .OUTPUTS
 PSObject[]
 Returns the modified User object array if cmdlet executes successfully.
@@ -359,14 +395,14 @@ In case of an error or warning, exception will be returned.
 Create a user account with name powershell and then modify "username", "password", "role", "Enabled", "Locked" properties of this user for a single iBMC server
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $pwd = ConvertTo-SecureString -String old-user-password -AsPlainText -Force
 PS C:\> Add-iBMCUser $session powershell $pwd 'Administrator'
 PS C:\> $newPwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> $User = Set-iBMCUser -Session $session -Username powershell -NewUsername powershell2 -NewPassword $newPwd -NewRole Operator -Enabled $true -Unlocked $true
 PS C:\> $User
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 Id       : 12
 Name     : User Account
 UserName : powershell
@@ -380,13 +416,13 @@ Oem      : @{Huawei=}
 Create a user account with name powershell and then modify the "username", "password", "role" properties of this user for multiple iBMC servers
 
 PS C:\> $credential = Get-Credential
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2,10.10.10.4 -Credential $credential -TrustCert
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1,192.168.10.4 -Credential $credential -TrustCert
 PS C:\> $pwd = ConvertTo-SecureString -String old-user-password -AsPlainText -Force
 PS C:\> Add-iBMCUser -Session $sessions powershell $pwd 'Administrator'
 PS C:\> $newPwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> Set-iBMCUser -Session $sessions -Username powershell -NewUsername powershell2 -NewPassword $newPwd -NewRole Operator
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 Id       : 12
 Name     : User Account
 UserName : powershell
@@ -400,11 +436,46 @@ Oem      : @{Huawei=}
 Modify "username", "password", "role" properties of a user with name "username" for multiple iBMC servers
 
 PS C:\> $credential = Get-Credential
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2-3 -Credential $credential -TrustCert
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1-3 -Credential $credential -TrustCert
 PS C:\> $newPwd = ConvertTo-SecureString -String new-user-password -AsPlainText -Force
 PS C:\> ,$sessions | Set-iBMCUser -Username username -NewUsername new-user2 -NewPassword $newPwd -NewRole Administrator
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
+Id       : 12
+Name     : User Account
+UserName : new-user2
+RoleId   : Administrator
+Locked   : True
+Enabled  : True
+Oem      : @{Huawei=}
+
+Host     : 192.168.1.2
+Id       : 13
+Name     : User Account
+UserName : new-user2
+RoleId   : Administrator
+Locked   : True
+Enabled  : True
+Oem      : @{Huawei=}
+
+Host     : 192.168.1.3
+Id       : 14
+Name     : User Account
+UserName : new-user2
+RoleId   : Administrator
+Locked   : True
+Enabled  : True
+Oem      : @{Huawei=}
+
+.EXAMPLE
+
+Modify "username", "password" properties of a user with name "username" with SecureEnabled on
+
+PS C:\> $credential = Get-Credential
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> Set-iBMCUser -Session $session -Username username -SecureEnabled
+
+Host     : 192.168.1.1
 Id       : 12
 Name     : User Account
 UserName : powershell
@@ -451,7 +522,11 @@ Disconnect-iBMC
 
     [switch[]]
     [parameter(Mandatory = $false)]
-    $Unlocked
+    $Unlocked,
+    
+    [switch]
+    [parameter(Mandatory = $false)]
+    $SecureEnabled
   )
 
   begin {
@@ -461,6 +536,11 @@ Disconnect-iBMC
     Assert-ArrayNotNull $Session 'Session'
     Assert-ArrayNotNull $Username 'Username'
     $Usernames = Get-MatchedSizeArray $Session $Username 'Session' 'Username'
+    if ($SecureEnabled) {
+      $Account = Get-AccountInfo
+      $NewUsername = @($Account[0])
+      $NewPassword = @($Account[1])
+    }
     $NewUsernames = Get-OptionalMatchedSizeArray $Session $NewUsername
     $NewPasswords = Get-OptionalMatchedSizeArray $Session $NewPassword
     $NewRoles = Get-OptionalMatchedSizeArray $Session $NewRole
@@ -564,7 +644,7 @@ In case of an error or warning, exception will be returned.
 Remove a iBMC user account that has a username "user1"
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Remove-iBMCUser -Session $session -Username user1
 
 
@@ -573,7 +653,7 @@ PS C:\> Remove-iBMCUser -Session $session -Username user1
 Remove a iBMC user account that has a username "user1"
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> ,$session | Remove-iBMCUser -Username user1
 
 

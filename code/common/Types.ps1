@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.	
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -110,6 +110,15 @@ try { [BootSourceOverrideEnabled] | Out-Null } catch {
       Disabled,
       Once,
       Continuous
+    }
+'@
+}
+
+try { [BootSourceOverrideMode] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum BootSourceOverrideMode {
+      Legacy,
+      UEFI
     }
 '@
 }
@@ -434,6 +443,15 @@ try { [LDAPGroupRole] | Out-Null } catch {
       CustomRole2,
       CustomRole3,
       CustomRole4
+    }
+'@
+}
+
+try { [HttpContentType] | Out-Null } catch {
+  Add-Type -TypeDefinition @'
+    public enum HttpContentType {
+      Form,
+      Json
     }
 '@
 }

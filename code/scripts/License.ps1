@@ -30,11 +30,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $License = Get-iBMCLicense -Session $session
 PS C:\> $License
 
-Host            : 10.1.1.2
+Host            : 192.168.1.1
 Id              : LicenseService
 Name            : License Service
 Capability      : {Local, Remote}
@@ -145,47 +145,77 @@ If not configured, iBMC is used by default.
 
 
 .OUTPUTS
-PSObject[]
-Returns null if cmdlet executes successfully.
-In case of an error or warning, exception will be returned.
+return task information
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Install-iBMCLicense -Session $session `
           -LicenseFileURI "E:\huawei\PowerShell\LIC2288H_V5_2_20180905LTM65C.xml" `
           -LicenseSource iBMC
+
+Host         ActivityName    TaskPercent Messages
+----         ------------    ----------- --------
+192.168.1.1 [192.168.1.1]  None        The license has been installed successfully.
 
 This example shows how to install iBMC license from local file
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Install-iBMCLicense -Session $session `
           -LicenseFileURI "/tmp/LIC2288H_V5_2_20180905LTM65C.xml"
+
+Host         ActivityName    TaskPercent Messages
+----         ------------    ----------- --------
+192.168.1.1 [192.168.1.1]  None        The license has been installed successfully.
 
 This example shows how to install iBMC license from ibmc temp file
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Install-iBMCLicense -Session $session `
-          -LicenseFileURI "nfs://10.10.10.2/data/nfs/LIC2288H_V5_2_20180905LTM65C.xml"
+          -LicenseFileURI "nfs://192.168.10.2/data/nfs/LIC2288H_V5_2_20180905LTM65C.xml"
+
+Host         : 192.168.1.1
+Id           : 2
+Name         : license install task
+ActivityName : [70.166.10.26] license install task
+TaskState    : Completed
+StartTime    : 2021-04-10T22:57:41+08:00
+EndTime      : 2021-04-10T22:57:43+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
 
 This example shows how to install iBMC license from NFS network file
 
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> Install-iBMCLicense -Session $session `
+          -LicenseFileURI "sftp://192.168.1.2/data/LIC2288H_V5_2_20180905LTM65C.xml" -SecureEnabled
+
+Host         : 192.168.1.1
+Id           : 2
+Name         : license install task
+ActivityName : [70.166.10.26] license install task
+TaskState    : Completed
+StartTime    : 2021-04-10T22:57:41+08:00
+EndTime      : 2021-04-10T22:57:43+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+
+This example shows how to install iBMC license from NFS network file with secure parameter
+
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
-
-Get-iBMCLicense
-Install-iBMCLicense
-Export-iBMCLicense
-Delete-iBMCLicense
-Connect-iBMC
-Disconnect-iBMC
 
 #>
   [CmdletBinding()]
@@ -200,7 +230,11 @@ Disconnect-iBMC
 
     [LicenseSource[]]
     [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 2)]
-    $LicenseSource = [LicenseSource]::iBMC
+    $LicenseSource = [LicenseSource]::iBMC,
+
+    [switch]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $SecureEnabled
   )
 
   begin {
@@ -211,6 +245,11 @@ Disconnect-iBMC
     Assert-ArrayNotNull $LicenseFileURI 'LicenseFileURI'
     $LicenseFileURIList = Get-MatchedSizeArray $Session $LicenseFileURI 'Session' 'LicenseFileURI'
     $LicenseSourceList = Get-OptionalMatchedSizeArray $Session $LicenseSource
+
+    if ($SecureEnabled) {
+      $SensitiveInfo = @(Get-SensitiveInfo)
+      $SensitiveInfoList = Get-OptionalMatchedSizeArray $Session $SensitiveInfo
+    }
 
     $Logger.info("Invoke install iBMC license function")
 
@@ -231,8 +270,8 @@ Disconnect-iBMC
       $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json)"))
 
       $Path = "/Managers/$($RedfishSession.Id)/LicenseService/Actions/LicenseService.InstallLicense"
-      Invoke-RedfishRequest $RedfishSession $Path 'Post' $Payload | Out-Null
-      return $null
+      $Result = Invoke-RedfishRequest $RedfishSession $Path 'Post' $Payload | ConvertFrom-WebResponse
+      return $Result
     }
 
     try {
@@ -242,13 +281,17 @@ Disconnect-iBMC
         $RedfishSession = $Session[$idx]
         $_LicenseFileURI = $LicenseFileURIList[$idx]
         $_LicenseSource = $LicenseSourceList[$idx]
+        if ($SecureEnabled) {
+          $SensitiveInfo = $SensitiveInfoList[$idx]
+          $_LicenseFileURI = Get-CompleteUri $SensitiveInfo $_LicenseFileURI
+        }
         $Parameters = @($RedfishSession, $_LicenseFileURI, $_LicenseSource)
         $Logger.info($(Trace-Session $RedfishSession "Submit install iBMC license task"))
         [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
       }
 
-      $Results = Get-AsyncTaskResults $tasks
-      return ,$Results
+      $RedfishTasks = Get-AsyncTaskResults $tasks
+      return Wait-RedfishTasks $pool $Session $RedfishTasks  -ShowProgress
     }
     finally {
       Close-Pool $pool
@@ -282,25 +325,70 @@ For examples:
   support protocol list: HTTPS, SFTP, NFS, SCP, CIFS
 
 .OUTPUTS
-null
-Returns null if cmdlet executes successfully.
+Returns result if cmdlet executes successfully.
 In case of an error or warning, exception will be returned.
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Export-iBMCLicense -Session $session -ExportTo "/tmp/License.xml"
+
+Host         : 192.168.1.1
+Guid         : 2421600
+ActivityName : [192.168.1.1]
+TaskPercent  :
+Messages     :
 
 This example shows how to export iBMC license to ibmc temp file
 
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> Export-iBMCLicense -Session $session -ExportTo "NFS://10.1.1.3/data/nfs/License.xml"
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> Export-iBMCLicense -Session $session -ExportTo "NFS://192.168.1.2/data/nfs/License.xml"
+
+Host         : 192.168.1.1
+@odata.id    : /redfish/v1/TaskService/Tasks/1
+Id           : 1
+Guid         : 2019820
+Name         : license export task
+ActivityName : [192.168.1.1] license export task
+TaskState    : Exception
+StartTime    : 2021-03-25T04:32:40+08:00
+EndTime      : 2021-03-25T04:32:42+08:00
+TaskStatus   : Warning
+TaskPercent  :
+Messages     : @{@odata.type=/redfish/v1/$metadata#MessageRegistry.1.0.0.MessageRegistry; MessageId=iBMC.1.0.FileTransf
+               erErrorDesc; RelatedProperties=System.Object[]; Message=xxxxx.; MessageArgs=System.Object[]; Se
+               verity=xxxx; Resolution=xxxxxx.}
+
 
 This example shows how to export iBMC license to NFS network file
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> Export-iBMCLicense -Session $session -ExportTo "sftp://192.168.1.2/data/License.xml" -SecureEnabled
+
+Host         : 192.168.1.1
+@odata.id    : /redfish/v1/TaskService/Tasks/1
+Id           : 1
+Guid         : 2019820
+Name         : license export task
+ActivityName : [192.168.1.1] license export task
+TaskState    : Exception
+StartTime    : 2021-03-25T04:32:40+08:00
+EndTime      : 2021-03-25T04:32:42+08:00
+TaskStatus   : Warning
+TaskPercent  :
+Messages     : @{@odata.type=/redfish/v1/$metadata#MessageRegistry.1.0.0.MessageRegistry; MessageId=iBMC.1.0.FileTransf
+               erErrorDesc; RelatedProperties=System.Object[]; Message=xxxxx.; MessageArgs=System.Object[]; Se
+               verity=xxxx; Resolution=xxxxxx.}
+
+
+This example shows how to export iBMC license to sftp network file with secure parameter
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -321,7 +409,11 @@ Disconnect-iBMC
 
     [String[]]
     [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
-    $ExportTo
+    $ExportTo,
+
+    [switch]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $SecureEnabled
   )
 
   begin {
@@ -332,6 +424,11 @@ Disconnect-iBMC
     Assert-ArrayNotNull $ExportTo 'ExportTo'
 
     $ExportToList = Get-MatchedSizeArray $Session $ExportTo
+
+    if ($SecureEnabled) {
+      $SensitiveInfo = @(Get-SensitiveInfo)
+      $SensitiveInfoList = Get-OptionalMatchedSizeArray $Session $SensitiveInfo
+    }
 
     # assert export to a same NFS file for mulitiple server
     if ($ExportTo.Count -eq 1 -and $Session.Count -gt 1) {
@@ -357,8 +454,8 @@ Disconnect-iBMC
 
       $Logger.info($(Trace-Session $RedfishSession "Sending payload: $($Clone | ConvertTo-Json)"))
       $Path = "/Managers/$($RedfishSession.Id)/LicenseService/Actions/LicenseService.ExportLicense"
-      Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload | Out-Null
-      return $Null
+      $Response = Invoke-RedfishRequest $RedfishSession $Path 'POST' $Payload | ConvertFrom-WebResponse
+      return $Response
     }
 
     try {
@@ -366,7 +463,10 @@ Disconnect-iBMC
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
         $Path = $ExportToList[$idx]
-
+        if ($SecureEnabled) {
+          $SensitiveInfo = $SensitiveInfoList[$idx]
+          $Path = Get-CompleteUri $SensitiveInfo $Path
+        }
         # validate network file schema
         Assert-NetworkUriInSchema $RedfishSession $Path $BMC.LicenseFileSupportSchema | Out-Null
         $Parameters = @($RedfishSession, $Path)
@@ -381,8 +481,9 @@ Disconnect-iBMC
         [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $ParametersList[$idx]))
       }
 
-      $Results = Get-AsyncTaskResults $tasks
-      return ,$Results
+      $RedfishTasks = Get-AsyncTaskResults $tasks
+      $Logger.Info("Export License task: $RedfishTasks")
+      return Wait-RedfishTasks $pool $Session $RedfishTasks  -ShowProgress
     }
     finally {
       Close-Pool $pool
@@ -413,7 +514,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Delete-iBMCLicense -Session $session
 
 .LINK

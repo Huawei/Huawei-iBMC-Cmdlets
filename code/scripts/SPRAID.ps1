@@ -31,14 +31,14 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Export-iBMCSPRAIDSetting -Session $Session
 PS C:\> Set-iBMCSPService -Session $Session -StartEnabled $true -SysRestartDelaySeconds 60
 PS C:\> Set-iBMCServerPower -Session $Session -ResetType ForceRestart
 PS C:\> $Setting = Get-iBMCSPRAIDSetting -Session $Session
 PS C:\> $Setting
 
-Host           : 10.1.1.2
+Host           : 192.168.1.1
 Id             : mainboardRaidCard1
 Name           : SP RAID Current Configuration
 CardModel      : LSI3008
@@ -140,7 +140,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Export-iBMCSPRAIDSetting -Session $Session
 
 
@@ -231,7 +231,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Clear-iBMCSPRAIDSetting $session -Location mainboard -DeviceName RAIDStorage1
 PS C:\>
 PS C:\> Export-iBMCSPRAIDSetting -Session $Session
@@ -364,7 +364,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $HotSpareDrives = ,@(5, 6)
 PS C:\> Set-iBMCSPRAIDSetting $session -Location mainboard -DeviceName RAIDStorage1 `
           -HotSpareDrives $HotSpareDrives
@@ -373,7 +373,7 @@ PS C:\> Export-iBMCSPRAIDSetting -Session $Session
 PS C:\> Set-iBMCSPService -Session $Session -StartEnabled $true -SysRestartDelaySeconds 60
 PS C:\> Set-iBMCServerPower -Session $Session -ResetType ForceRestart
 
-Host           : 10.1.1.2
+Host           : 192.168.1.1
 Id             : mainboardRaidCard1
 Name           : SP RAID Current Configuration
 CardModel      : LSI3008
@@ -541,7 +541,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Drives = ,@(0, 1)
 PS C:\> $VolumeName = "Volume1"
 PS C:\> Add-iBMCSPRAIDVolume $session -Location mainboard -DeviceName RAIDCard1 `
@@ -552,7 +552,7 @@ PS C:\> Export-iBMCSPRAIDSetting -Session $Session
 PS C:\> Set-iBMCSPService -Session $Session -StartEnabled $true -SysRestartDelaySeconds 60
 PS C:\> Set-iBMCServerPower -Session $Session -ResetType ForceRestart
 
-Host           : 10.1.1.2
+Host           : 192.168.1.1
 Id             : mainboardRaidCard1
 Name           : SP RAID Current Configuration
 CardModel      : LSI3008

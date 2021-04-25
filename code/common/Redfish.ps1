@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -77,25 +77,25 @@ System.Management.Automation.PSCustomObject
 New-RedfishSession returns a RedfishSession Object which contains - AuthToken, BaseUri, Location, TrustCert and Alive.
 
 .EXAMPLE
-PS C:\> $session = New-RedfishSession -Address 10.1.1.2 -Username root -Password password
+PS C:\> $session = New-RedfishSession -Address 192.168.1.1 -Username root -Password password
 
 
 PS C:\> $session | fl
 
 
-RootUri      : https://10.1.1.2/redfish/v1/
+RootUri      : https://192.168.1.1/redfish/v1/
 X-Auth-Token : this-is-a-sample-token
-Location     : https://10.1.1.2/redfish/v1/Sessions/{session-id}/
+Location     : https://192.168.1.1/redfish/v1/Sessions/{session-id}/
 RootData     : @{@odata.context=/redfish/v1/$metadata#ServiceRoot/; @odata.id=/redfish/v1/; @odata.type=#ServiceRoot.1.0.0.ServiceRoot; AccountService=; Chassis=; EventService=; Id=v1; JsonSchemas=; Links=; Managers=; Name=HP RESTful Root Service; Oem=; RedfishVersion=1.0.0; Registries=; SessionService=; Systems=; UUID=8dea7372-23f9-565f-9396-2cd07febbe29}
 
 .EXAMPLE
 PS C:\> $credential = Get-Credential
-PS C:\> $session = New-RedfishSession -Address 10.1.1.2 -Credential $credential
+PS C:\> $session = New-RedfishSession -Address 192.168.1.1 -Credential $credential
 PS C:\> $session | fl
 
-RootUri      : https://10.1.1.2/redfish/v1/
+RootUri      : https://192.168.1.1/redfish/v1/
 X-Auth-Token : this-is-a-sample-token
-Location     : https://10.1.1.2/redfish/v1/Sessions/{session-id}/
+Location     : https://192.168.1.1/redfish/v1/Sessions/{session-id}/
 RootData     : @{@odata.context=/redfish/v1/$metadata#ServiceRoot/; @odata.id=/redfish/v1/; @odata.type=#ServiceRoot.1.0.0.ServiceRoot; AccountService=; Chassis=; EventService=; Id=v1; JsonSchemas=; Links=; Managers=; Name=HP RESTful Root Service; Oem=; RedfishVersion=1.0.0; Registries=; SessionService=; Systems=; UUID=8dea7372-23f9-565f-9396-2cd07febbe29}
 
 .LINK
@@ -424,20 +424,29 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
       $FinishedTask = $FinishedTasks[$idx]
       $RedfishSession = $Sessions[$FinishedTask.index]
       $Properties = @(
-        "Id", "Name", "ActivityName", "TaskState",
-        "StartTime", "EndTime", "TaskStatus"
+        "^Id$", "^Name$", "^ActivityName$", "^TaskState$",
+        "^StartTime$", "^EndTime$", "^TaskStatus$"
       )
-
       $CleanTask = Copy-ObjectProperties $FinishedTask $Properties
-      $CleanTask | Add-Member -MemberType NoteProperty "TaskPercent" $FinishedTask.Oem.Huawei.TaskPercentage
+      $TaskPercent = "None"
+      if ($null -ne $FinishedTask.Oem.Huawei.TaskPercentage) {
+        $TaskPercent = $FinishedTask.Oem.Huawei.TaskPercentage
+      }
+      $CleanTask | Add-Member -MemberType NoteProperty "TaskPercent" $TaskPercent
       if ($FinishedTask.TaskState -ne $BMC.TaskState.Completed) {
-        $CleanTask | Add-Member -MemberType NoteProperty "Messages" $FinishedTask.Messages
+        # for remote url and local /tmp directory, the response is different 
+        $Message = "None"
+        if ($null -ne $FinishedTask."error") {
+          $Logger.info("return response contain error member")
+          $Message = $FinishedTask."error"."@Message.ExtendedInfo"[0]."Message"
+        } elseif ($null -ne $FinishedTask."Messages") {
+          $Message = $FinishedTask."Messages"
+        }
+        $CleanTask | Add-Member -MemberType NoteProperty "Messages" $Message
       }
       $CleanTask = $(Update-SessionAddress $RedfishSession $CleanTask)
       $Tasks[$FinishedTask.index] = $CleanTask # update task
     }
-
-
 
 
     $Logger.info("All redfish tasks done")
@@ -497,38 +506,25 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     function Write-SPTransferProgress($RedfishSession, $SPFWUpdate) {
       if ($ShowProgress) {
         if ($SPFWUpdate -isnot [Exception]) {
-          if ($SPFWUpdate.TransferFileName -eq $SPFWUpdate.TargetFileName) {
-            $FileName = $SPFWUpdate.TargetFileName
-            $TransferState = $SPFWUpdate.TransferState
-            if ($TransferState -eq 'Processing') {
-              $Percent = $SPFWUpdate.TransferProgressPercent
-              $Logger.Info($(Trace-Session $RedfishSession "File $($SPFWUpdate.TransferFileName) transfer $($Percent)%"))
-              if ($null -eq $Percent) {
-                $Percent = 0
-              }
-              Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -PercentComplete $Percent `
-                -Status "$($Percent)% $(Get-i18n MSG_PROGRESS_PERCENT)"
-            }
-            elseif ($TransferState -in @('Completed', 'Success')) {
-              $Logger.Info($(Trace-Session $RedfishSession "File $FileName transfer finished."))
-              Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -Completed -Status $(Get-i18n MSG_PROGRESS_COMPLETE)
-            }
-            elseif ($TransferState -eq 'Failure') {
-              $ToJson = $SPFWUpdate | ConvertTo-Json
-              $Logger.Info($(Trace-Session $RedfishSession "File $FileName transfer Failure. Response: $ToJson"))
-              Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -Completed -Status $(Get-i18n MSG_PROGRESS_FAILED)
-            }
-          } else {
-            $Logger.Info($(Trace-Session $RedfishSession "File $($SPFWUpdate.TransferFileName) not equal $($SPFWUpdate.TargetFileName)"))
-            # if file name changed, treat it as success
-            Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -Completed -Status $(Get-i18n MSG_PROGRESS_COMPLETE)
+          # percent is reliable, transfer state is not reliable
+          $Percent = $SPFWUpdate.TransferProgressPercent
+          if ([string]::IsNullOrEmpty($Percent)) {
+            $Percent = 0
+          }
+          $Logger.Info($(Trace-Session $RedfishSession "Task $($SPFWUpdate.ActivityName) is $Percent%"))
+          if ($Percent -ge 0 -and $Percent -lt 100) {
+            Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -PercentComplete $Percent `
+            -Status "$($Percent)% $(Get-i18n MSG_PROGRESS_PERCENT)"
+          } elseif ($Percent -eq 100) {
+            Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -Status $(Get-i18n MSG_PROGRESS_COMPLETE)
+          } elseif ($Percent -lt 0) {
+            Write-Progress -Id $SPFWUpdate.Guid -Activity $SPFWUpdate.ActivityName -Status $(Get-i18n MSG_PROGRESS_FAILED)
           }
         }
       }
     }
 
     $Logger.info("Start wait for all SPFW Update files transfer done")
-
     $GuidPrefix = [string] $(Get-RandomIntGuid)
     # initialize tasks
     for ($idx=0; $idx -lt $SPFWUpdates.Count; $idx++) {
@@ -548,16 +544,17 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
     while ($true) {
       if ($FirstRound) {
         $FirstRound = $false
-        $Transfering = @($($SPFWUpdates | Where-Object {$_ -isnot [Exception]} | Where-Object TransferState -ne 'Failure'))
+        $Transfering = @($($SPFWUpdates | Where-Object {$_ -isnot [Exception]} | Where-Object {$_.TransferState -ne 'Failure'}))
       } else {
-        $Transfering = @($($SPFWUpdates | Where-Object {$_ -isnot [Exception]} | Where-Object TransferState -eq 'Processing'))
+        # current base on the transfer progress to determine task running or not
+        # TransferState is not reliable
+        $Transfering = @($($SPFWUpdates | Where-Object {$_ -isnot [Exception]} | Where-Object {($_.TransferProgressPercent -ge 0 -and $_.TransferProgressPercent -lt 100) -or [string]::IsNullOrEmpty($_.TransferProgressPercent)}))
       }
       $Logger.info("Remain Transfering task count: $($Transfering.Count)")
-      # $Logger.info("Remain running tasks: $Transfering")
       if ($Transfering.Count -eq 0) {
         break
       }
-      Start-Sleep -Milliseconds 300
+      Start-Sleep -Milliseconds 1000
       # filter running task and fetch task new status
       $AsyncTasks = New-Object System.Collections.ArrayList
       for ($idx=0; $idx -lt $Transfering.Count; $idx++) {
@@ -585,10 +582,9 @@ https://github.com/Huawei/Huawei-iBMC-Cmdlets
       $Finished = $FinishedFiles[$idx]
       $RedfishSession = $Sessions[$Finished.index]
       $Properties = @(
-        "Name", "ActivityName", "TransferState", "TransferFileName",
-        "TransferProgressPercent", "FileList", "Messages"
+        "^Name$", "^ActivityName$", "^TransferState$", "^TransferFileName$",
+        "^TransferProgressPercent$", "^FileList$", "^Messages$"
       )
-
       $Clone = Copy-ObjectProperties $Finished $Properties
       $SPFWUpdates[$Finished.index] = Update-SessionAddress $RedfishSession $Clone
     }
@@ -619,7 +615,6 @@ function Get-SPFWUpdate {
   }
 
   process {
-
     function Update-FileListIfNeccess($Session, $SPFWUpdate) {
       $SuccessStatus = @('Completed', 'Success')
       if ($SPFWUpdate.TransferState -in $SuccessStatus) {
@@ -627,9 +622,12 @@ function Get-SPFWUpdate {
         Start-Sleep -Seconds 3
         $TryTimes = 20
         while ($TryTimes -gt 0) {
-          $GetSPFileList = Invoke-RedfishRequest $Session $OdataId | ConvertFrom-WebResponse
-          if ($null -ne $GetSPFileList.FileList -and $GetSPFileList.FileList.Count -gt 0) {
-            $SPFWUpdate.FileList = $GetSPFileList.FileList
+          $SPUPdateData = Invoke-RedfishRequest $Session $OdataId | ConvertFrom-WebResponse
+          if ($null -ne $SPUPdateData) {
+            $Logger.info("update the sp firmware update information")
+            $SPFWUpdate.FileList = $SPUPdateData.FileList
+            $SPFWUPdate.TransferProgressPercent = $SPUPdateData.TransferProgressPercent
+            $SPFWUPdate.TransferState = $SPUPdateData.TransferState
             break
           }
           $TryTimes = $TryTimes - 1
@@ -795,7 +793,6 @@ function Invoke-RedfishFirmwareUpload {
   try {
     # $ASCIIEncoder = [System.Text.Encoding]::ASCII
     $UTF8Encoder = [System.Text.Encoding]::UTF8
-    # DTS2020040210455 20200414 Modify the upload file interface request package
     $Boundary = "----$($(Get-Date).Ticks)"
     $BoundaryAsBytes = $UTF8Encoder.GetBytes("--$Boundary`r`n")
 
@@ -805,7 +802,6 @@ function Invoke-RedfishFirmwareUpload {
     $RequestStream = $Request.GetRequestStream()
     $RequestStream.Write($BoundaryAsBytes, 0, $BoundaryAsBytes.Length)
 
-    # DTS2020040210455 20200414 Modify the upload file interface request package
     $Header = "Content-Disposition: form-data; name=`"imgfile`"; filename=`"$($FileName)`"`
       `r`n`r`n"
     $HeaderAsBytes = $UTF8Encoder.GetBytes($Header)
@@ -849,28 +845,25 @@ function Invoke-FileUploadIfNeccessary ($RedfishSession, $ImageFilePath, $Suppor
   }
 
   $SupportSchemaString = $SupportSchema -join ", "
-  try {
-    $ImageFileUri = New-Object System.Uri($ImageFilePath)
-  } catch {
-    throw $(Get-i18n ERROR_FILE_URI_ILLEGAL)
-  }
   $SecureFileUri = $ImageFilePath
-  if($ImageFileUri.UserInfo.Length -gt 0) {
-    $SecureFileUri = $ImageFileUri.AbsoluteUri -replace $ImageFileUri.UserInfo, "***:***"
+  if($ImageFilePath -match "//(.+):(.+)@") {
+    $SecureFileUri = $ImageFilePath -replace "//(.+):(.+)@", "//****:****@"
   }
 
-  if ($ImageFileUri.Scheme -notin $SupportSchema) {
+  $Schema = Get-NetworkUriSchema $ImageFilePath
+  if ($Schema -notin $SupportSchema) {
     $Logger.warn($(Trace-Session $RedfishSession "File $SecureFileUri is not in support schema: $SupportSchemaString"))
-    throw $([string]::Format($(Get-i18n ERROR_FILE_URI_NOT_SUPPORT), $ImageFileUri, $SupportSchemaString))
+    throw $([string]::Format($(Get-i18n ERROR_FILE_URI_NOT_SUPPORT), $SecureFileUri, $SupportSchemaString))
   }
 
-  if ($ImageFileUri.Scheme -eq 'file') {
+  if ($Schema -eq 'file') {
     $Logger.info($(Trace-Session $RedfishSession"File $SecureFileUri is a local file, upload to bmc now"))
     $Ext = [System.IO.Path]::GetExtension($ImageFilePath)
     if ($null -eq $Ext -or $Ext -eq '') {
       $UploadFileName = "$(Get-RandomIntGuid).hpm"
     } else {
-      $UploadFileName = $ImageFileUri.Segments[-1]
+      $FileName = $ImageFilePath.Split("/").Split("\")
+      $UploadFileName = $FileName[-1]
     }
 
     # upload image file to bmc
@@ -996,13 +989,11 @@ function New-RedfishRequest {
   else {
     $OdataId = "$($session.BaseUri)/redfish/v1$($Path)"
   }
-
   $IfMatchMissing = ($null -eq $Headers -or 'If-Match' -notin $Headers.Keys)
   if ($IfMatchMissing -and $method -in @('Put', 'Patch')) {
     $Logger.Info($(Trace-Session $Session "No if-match present, will auto load etag now"))
     $Response = Invoke-RedfishRequest -Session $Session -Path $Path
     $OdataEtag = $Response.Headers.get('ETag')
-    # $Logger.info($(Trace-Session $Session "Etag of Odata $Path -> $OdataEtag"))
     $Response.close()
   }
 
@@ -1024,30 +1015,34 @@ function New-RedfishRequest {
   # $Request.ClientCertificates.AddRange($Certificate)
 
   $Request.ServerCertificateValidationCallback = {
-    param($sender, $certificate, $chain, $errors)
+    param($Source, $certificate, $Chain, $errors)
     if ($errors -eq 'None') {
+      $Logger.warn("There is not SSL policy errors")
       return $true
     }
 
-    if ($true -eq $session.TrustCert) {
-      # $Logger.debug("TrustCert present, Ignore HTTPS certification")
+    if ($true -eq $Session.TrustCert) {
+      $Logger.info("TrustCert present, Ignore HTTPS certification")
       return $true
     }
 
-    # enable fingerprint match testing
-    # if ($Request -eq $sender) {
-    #   $Certificates = $(Get-ChildItem -Path cert:\ -Recurse | where-object Thumbprint -eq $certificate.Thumbprint)
-    #   if ($null -ne $Certificates -and $Certificates.count -gt 0) {
-    #     return $true
-    #   }
-    # }
+    # use the ca root certificate to form certificate chain
+    if ($errors.HasFlag([Net.Security.SslPolicyErrors]::RemoteCertificateChainErrors)) {
+      $Logger.info("failed to form certificate chain from remote site, please make sure install the CA root certificate")
+      return $false;
+    }
 
-    return $false
+    # if no certificate for the server site
+    if ($errors.HasFlag([Net.Security.SslPolicyErrors]::RemoteCertificateNotAvailable)) {
+      $Logger.info("failed to get certificate chain from remote site, please make sure server site has server certificate")
+      return $false;
+    }
+
+    return $true
   }
 
   # $Logger.info("The 'ProtocolVersion' of the protocol used is $($Request.ProtocolVersion)")
   $Request.Method = $Method.ToUpper()
-  $Request.UserAgent = "PowerShell Huawei iBMC Cmdlet"
   # $Request.KeepAlive = $true
   # $Request.Accept = "text/html, application/xhtml+xml, application/pdf, */*"
   # $Request.Headers.Add("Accept-Language", "en-US,en;q=0.9")
@@ -1071,7 +1066,6 @@ function New-RedfishRequest {
   if ($null -ne $OdataEtag) {
     $Request.Headers.Add('If-Match', $OdataEtag)
   }
-
   return $Request
 }
 
@@ -1110,7 +1104,6 @@ function Resolve-RedfishFailureResponse ($Session, $Request, $Ex, $ContinueEvenF
       throw $Ex.Exception
     }
   } catch {
-    # $Logger.info("rethrow exceptions [$($Session.Address)] $($_.Exception)")
     throw "[$($Session.Address)] $($_.Exception.Message)"
   }
 }
@@ -1138,6 +1131,7 @@ function ConvertFrom-WebResponse {
     [parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
     $Response
   )
+
   return Get-WebResponseContent $Response | ConvertFrom-Json
 }
 
@@ -1151,7 +1145,6 @@ function Get-WebResponseContent {
     $stream = $response.GetResponseStream()
     $streamReader = New-Object System.IO.StreamReader($stream)
     $content = $streamReader.ReadToEnd()
-    # $Logger.debug("Redfish API Response: [$($response.StatusCode.value__)] $content")
     return $content
   }
   finally {
