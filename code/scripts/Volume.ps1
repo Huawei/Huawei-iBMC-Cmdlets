@@ -34,11 +34,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Volumes = Get-iBMCVolume -Session $Session -StorageId RAIDStorage0
 PS C:\> $Volumes
 
-Host                      : 10.1.1.2
+Host                      : 192.168.1.1
 Id                        : LogicalDrive0
 Name                      : LogicalDrive0
 CapacityBytes             : 1099511627776
@@ -182,7 +182,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Initialize-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -VolumeId LogicalDrive0 -InitAction QuickInit
 
@@ -327,13 +327,13 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Remove-iBMCVolume -Session $session -StorageId RAIDStorage0 -VolumeId LogicDrive0
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 3
 Name         : volume deletion task
-ActivityName : [10.1.1.2] volume deletion task
+ActivityName : [192.168.1.1] volume deletion task
 TaskState    : Completed
 StartTime    : 2019-01-06T22:48:09+00:00
 EndTime      : 2019-01-06T22:48:13+00:00
@@ -542,15 +542,15 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Drives = ,@(0, 1)
 PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -CacheCade $false -RAIDLevel RAID1 -Drives $Drives
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 4
 Name         : volume creation task
-ActivityName : [10.1.1.2] volume creation task
+ActivityName : [192.168.1.1] volume creation task
 TaskState    : Completed
 StartTime    : 2019-01-07T09:37:15+00:00
 EndTime      : 2019-01-07T09:37:29+00:00
@@ -562,7 +562,7 @@ This example show how to create a none CacheCade volume with only required optio
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Drives = ,@(0, 1)
 PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -CacheCade $false -RAIDLevel RAID1 -Drives $Drives `
@@ -570,10 +570,10 @@ PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -AccessPolicy ReadWrite -InitMode QuickInit -SpanNumber 1 -DriveCachePolicy Unchanged `
           -DefaultWritePolicy WriteBackWithBBU -DefaultReadPolicy NoReadAhead
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 4
 Name         : volume creation task
-ActivityName : [10.1.1.2] volume creation task
+ActivityName : [192.168.1.1] volume creation task
 TaskState    : Completed
 StartTime    : 2019-01-07T09:37:15+00:00
 EndTime      : 2019-01-07T09:37:29+00:00
@@ -585,15 +585,15 @@ This example show how to create a none CacheCade volume with all options
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Drives = ,@(0, 1)
 PS C:\> $Volumes = Add-iBMCVolume -Session $session -StorageId RAIDStorage0 `
           -CacheCade $true -RAIDLevel RAID1 -Drives $Drives -DefaultWritePolicy WriteBackWithBBU
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 4
 Name         : volume creation task
-ActivityName : [10.1.1.2] volume creation task
+ActivityName : [192.168.1.1] volume creation task
 TaskState    : Completed
 StartTime    : 2019-01-07T09:37:15+00:00
 EndTime      : 2019-01-07T09:37:29+00:00
@@ -856,7 +856,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCVolume -Session $session -StorageId RAIDStorage0 -VolumeId LogicalDrive0 -VolumeName Volume1 `
           -DefaultCachePolicy CachedIO -DefaultWritePolicy WriteBack -DefaultReadPolicy ReadAhead `
           -AccessPolicy ReadOnly -DriveCachePolicy Enabled `

@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $System = Get-iBMCSystemInfo $session
 PS C:\> $System
 
-Host             : 10.1.1.2
+Host             : 192.168.1.1
 Id               : 1
 Name             : Computer System
 AssetTag         : my test
@@ -151,17 +151,17 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2-5 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1-5 -Credential $credential -TrustCert
 PS C:\> $Interfaces = Get-iBMCSystemNetworkSettings $session
 PS C:\> $Interfaces
 
-Host                : 10.1.1.2
+Host                : 192.168.1.1
 Id                  : mainboardLOMPort1
 Name                : System Ethernet Interface
-PermanentMACAddress : 04:88:5F:D4:C6:52
-MACAddress          : 04:88:5F:D4:C6:52
+PermanentMACAddress : xx:xx:xx:xx:xx:xx
+MACAddress          : xx:xx:xx:xx:xx:xx
 LinkStatus          : LinkUp
-IPv4Addresses       : {@{Address=10.1.1.20; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=}}
+IPv4Addresses       : {@{Address=192.168.1.10; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=}}
 IPv6Addresses       : {@{Address=fe80::20; PrefixLength=10; AddressOrigin=SLAAC; AddressState=},
                       @{Address=fe80::21;PrefixLength=10; AddressOrigin=SLAAC; AddressState=},
                       @{Address=fe80::22; PrefixLength=10; AddressOrigin=Static; AddressState=}}
@@ -170,11 +170,11 @@ InterfaceType       : Physical
 BandwidthUsage      : 0
 BDF                 : 0000:1a:00.0
 
-Host                : 10.1.1.3
+Host                : 192.168.1.3
 Id                  : mainboardLOMPort2
 Name                : System Ethernet Interface
-PermanentMACAddress : 04:88:5F:D4:C6:53
-MACAddress          : 04:88:5F:D4:C6:54
+PermanentMACAddress : xx:xx:xx:xx:xx:xx
+MACAddress          : xx:xx:xx:xx:xx:xx
 LinkStatus          : NoLink
 IPv4Addresses       : {}
 IPv6Addresses       : {}
@@ -183,11 +183,11 @@ InterfaceType       : Physical
 BandwidthUsage      :
 BDF                 : 0000:1a:00.1
 
-Host                : 10.1.1.4
+Host                : 192.168.1.4
 Id                  : mainboardLOMPort3
 Name                : System Ethernet Interface
-PermanentMACAddress : 04:88:5F:D4:C6:54
-MACAddress          : 04:88:5F:D4:C6:54
+PermanentMACAddress : xx:xx:xx:xx:xx:xx
+MACAddress          : xx:xx:xx:xx:xx:xx
 LinkStatus          :
 IPv4Addresses       : {}
 IPv6Addresses       : {}
@@ -196,11 +196,11 @@ InterfaceType       : Physical
 BandwidthUsage      :
 BDF                 : 0000:1a:00.2
 
-Host                : 10.1.1.5
+Host                : 192.168.1.5
 Id                  : mainboardLOMPort4
 Name                : System Ethernet Interface
-PermanentMACAddress : 04:88:5F:D4:C6:55
-MACAddress          : 04:88:5F:D4:C6:55
+PermanentMACAddress : xx:xx:xx:xx:xx:xx
+MACAddress          : xx:xx:xx:xx:xx:xx
 LinkStatus          : NoLink
 IPv4Addresses       : {}
 IPv6Addresses       : {}

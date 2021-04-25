@@ -32,11 +32,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Services = Get-iBMCServices $session
 PS C:\> $Services
 
-Host          : 10.1.1.2
+Host          : 192.168.1.1
 HTTP          : @{ProtocolEnabled=True; Port=80}
 HTTPS         : @{ProtocolEnabled=True; Port=443}
 SNMP          : @{ProtocolEnabled=True; Port=161}
@@ -142,7 +142,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCService -Session $session -ServiceName VNC -Enabled $true -Port 5900
 
 .LINK

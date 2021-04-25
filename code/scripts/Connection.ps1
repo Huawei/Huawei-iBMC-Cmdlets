@@ -46,29 +46,29 @@ Returns the created RedfishSession if cmdlet executes successfully.
 In case of an error or warning, exception will be returned.
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2 -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1 -Username root -Password password
 PS C:\> $sessions
 
 .EXAMPLE
 PS C:\> $credential = Get-Credential
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2 -Credential $credential
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1 -Credential $credential
 PS C:\> $sessions
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address "10.1.1.2,5,8" -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address "192.168.1.1,5,8" -Username root -Password password
 PS C:\> $sessions
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2-10 -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1-10 -Username root -Password password
 PS C:\> $sessions
 
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2,10.1.1.3 -Username root -Password password
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1,192.168.1.3 -Username root -Password password
 PS C:\> $sessions
 
 .EXAMPLE
-PS C:\> $sessions = Connect-iBMC -Address 10.1.1.2,10.1.1.3 -Username user1,user2 -Password password1,password2
+PS C:\> $sessions = Connect-iBMC -Address 192.168.1.1,192.168.1.3 -Username user1,user2 -Password password1,password2
 PS C:\> $sessions
 
 
@@ -130,6 +130,10 @@ Test-iBMCConnect
     [parameter(Mandatory = $false)]
     $TrustCert
   )
+  
+  # Enable valid and secure cipher suites
+  Disable-WeakCipherSuite
+  Enable-StrongCipherSuite
 
   $useCredential = $($null -ne $Credential)
   if ($useCredential) {
@@ -292,7 +296,7 @@ In case of an error or warning, exception will be returned.
 
 .EXAMPLE
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCSessionTimeout -Session $session -Timeout 600
 
 .LINK
@@ -375,11 +379,11 @@ In case of an error or warning, exception will be returned.
 
 .EXAMPLE
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $SessionTimeout = Get-iBMCSessionTimeout -Session $session
 PS C:\> $SessionTimeout | fl
 
-Host           : 10.1.1.2
+Host           : 192.168.1.1
 SessionTimeout : 600
 
 .LINK
@@ -467,7 +471,7 @@ Health              : OK
 State               : Enabled
 DateTime            : 2018-10-16T17:50:05+08:00
 DateTimeLocalOffset : Asia/Chongqing
-BaseUri             : https://10.1.1.2
+BaseUri             : https://192.168.1.1
 Location            : /redfish/v1/SessionService/Sessions/8c2790fbef51b40c
 Alive               : False
 AuthToken           : eac9b1d6be37f69fd783355ece67f2f2

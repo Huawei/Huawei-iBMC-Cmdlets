@@ -29,16 +29,16 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSMTPSetting -Session $session
 
-Host                  : 10.1.1.2
+Host                  : 192.168.1.1
 ServiceEnabled        : True
 ServerAddress         : smtp.qq.com
 TLSEnabled            : True
 AnonymousLoginEnabled : False
-SenderUserName        : smtp-sender@huawei.com
-SenderAddress         : xmufive@qq.com
+SenderUserName        : xxxx@xxx.com
+SenderAddress         : xxxx@xxx.com
 EmailSubject          : Server Alert
 EmailSubjectContains  : {HostName, BoardSN, ProductAssetTag}
 AlarmSeverity         : Major
@@ -74,8 +74,8 @@ Disconnect-iBMC
       $Path = "/Managers/$($RedfishSession.Id)/SmtpService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
       $Properties = @(
-        "ServiceEnabled", "ServerAddress", "TLSEnabled", "AnonymousLoginEnabled",
-        "SenderUserName", "SenderAddress", "EmailSubject", "EmailSubjectContains", "AlarmSeverity"
+        "^ServiceEnabled$", "^ServerAddress$", "^TLSEnabled$", "^AnonymousLoginEnabled$",
+        "^SenderUserName$", "^SenderAddress$", "^EmailSubject$", "^EmailSubjectContains$", "^AlarmSeverity$"
       )
       $SMTP = Copy-ObjectProperties $Response $Properties
       return $(Update-SessionAddress $RedfishSession $SMTP)
@@ -164,7 +164,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $pwd = ConvertTo-SecureString -String "pwd12#$%^" -AsPlainText -Force
 PS C:\> $ServerIdentifer = ,@('HostName', 'BoardSN')
 PS C:\> Set-iBMCSMTPSetting $session -ServiceEnabled $false -ServerAddress smtp.huawei.com `
@@ -328,29 +328,29 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $recipients = Get-iBMCSMTPRecipients -Session $session
 PS C:\> $recipients
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 MemberId     : 0
 Enabled      : False
 EmailAddress :
 Description  :
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 MemberId     : 1
 Enabled      : False
 EmailAddress :
 Description  :
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 MemberId     : 2
 Enabled      : False
 EmailAddress :
 Description  :
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 MemberId     : 3
 Enabled      : False
 EmailAddress :
@@ -451,7 +451,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCSMTPRecipient $session -MemberId 1 -Enabled $true -EmailAddress r2@huawei.com -Description 'desc'
 
 

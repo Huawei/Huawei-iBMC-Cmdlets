@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -424,8 +424,14 @@ function Trace-Session ($Session, $message) {
 
 function Copy-ObjectProperties ($Source, $Properties) {
   $Clone = New-Object PSObject
-  $Properties | ForEach-Object {
-    $Clone | Add-Member -MemberType NoteProperty "$_" $Source."$_"
+   foreach ($key in $Properties) {
+    foreach ($member in $Source.psobject.properties.name) {
+      if ($key.indexOf("^") -ne -1 -and $member -match $key) {
+        $Clone | Add-Member -MemberType NoteProperty "$member" $Source."$member" -Force
+      } elseif ($key.indexOf("^") -eq -1 -and  $member -eq $key) {
+        $Clone | Add-Member -MemberType NoteProperty "$member" $Source."$member" -Force
+      }
+    }
   }
   return $Clone
 }
@@ -559,15 +565,37 @@ function Protect-NetworkUriUserInfo {
     [string] $NetworkPath
   )
   try {
-    $NetworkUri = New-Object System.Uri($NetworkPath)
+    $encodeUrl = [System.Web.HTTPUtility]::UrlEncode($NetworkPath)
+    $
+    $NetworkUri = New-Object System.Uri($encodeUrl)
     if($NetworkUri.UserInfo.Length -gt 0) {
       return $NetworkUri.AbsoluteUri -replace $NetworkUri.UserInfo, "***:***"
     }
-    return $NetworkPath
+    $Logger.info("network path doesn't contain user information, returning original data")
+    return CoverUp-NetworkPathUserInfo $NetworkPath
   } catch {
-    return $NetworkPath
+    $Logger.info("network path cannot convert to uri normally, returning original data")
+    return CoverUp-NetworkPathUserInfo $NetworkPath
   }
 }
+
+function CoverUp-NetworkPathUserInfo {
+  [CmdletBinding()]
+    param (
+      [string] $NetworkPath
+    )
+    if ([string]::IsNullOrEmpty($NetworkPath)) {
+      return $NetworkPath
+    }
+
+    if ($NetworkPath -match "//(.+):(.+)@") {
+      $Logger.info("network path contains user info pattern, going to cover up")
+      return $NetworkPath -replace "//(.+):(.+)@", "//****:****@"
+    }
+    $Logger.info("network path does not contain user info pattern, returning original path")
+    return $NetworkPath
+}
+
 
 function Resolve-NetworkUriSchema {
   [CmdletBinding()]
@@ -580,11 +608,31 @@ function Resolve-NetworkUriSchema {
     if($NetworkPath.StartsWith($Schema, "CurrentCultureIgnoreCase")) {
       return "$($Schema.ToLower())$($NetworkPath.Substring($Schema.Length))"
     }
+    $Logger.info("network path does not start with $Schema, return original data")
     return $NetworkPath
   } catch {
+    $Logger.info("network path can't turn into system uri, return original data")
     return $NetworkPath
   }
 }
+
+function Get-NetworkUriSchema {
+  [CmdletBinding()]
+  param (
+    [string] $NetworkPath
+  )
+  $Schema = ""
+  try {
+    $NetworkUri = New-Object System.Uri($NetworkPath)
+    $Schema = $NetworkUri.Scheme
+    return $Schema
+  } catch {
+    $Logger.info("network path can't turn into system uri, return substring result")
+    $Schema = $NetworkPath.Substring(0, $NetworkPath.indexOf("://"))
+    return $Schema
+  }
+}
+
 
 function Update-SessionAddress {
   [CmdletBinding()]
@@ -627,14 +675,16 @@ function Assert-NetworkUriInSchema ($RedfishSession, $FilePath, $SupportSchema) 
 
 
   $SupportSchemaString = $SupportSchema -join ", "
+  $Schema = ""
   try {
     $ImageFileUri = New-Object System.Uri($FilePath)
+    $Schema = $ImageFileUri.Scheme
   } catch {
-    throw $(Get-i18n ERROR_FILE_URI_ILLEGAL)
+    $Logger.info("Image file uri can not convert to system uri")
+    $Schema = $FilePath.Substring(0, $FilePath.IndexOf("://"))
   }
-
   $SecureFileUri = Protect-NetworkUriUserInfo $FilePath
-  if ($ImageFileUri.Scheme -notin $SupportSchema) {
+  if ($Schema -notin $SupportSchema) {
     $Logger.warn($(Trace-Session $RedfishSession "File $SecureFileUri is not in support schema: $SupportSchemaString"))
     throw $([string]::Format($(Get-i18n ERROR_FILE_URI_NOT_SUPPORT), $ImageFileUri, $SupportSchemaString))
   }
@@ -709,4 +759,72 @@ function Assert-IPv6 ($IPv6Address) {
     return $match 
   }
   return $true
+}
+
+function Get-SensitiveInfo {
+  $Logger.info("GUI to get sensitive info")
+  $credential = Get-Credential
+  if ((-not ($credential.username -match "^[^:@/]+$")) -or (-not ($credential.GetNetworkCredential().password -match "^[^:@/]+$"))) {
+    throw $(Get-i18n ERROR_INVALID_CHARACTER)
+  }
+  return "$($credential.username):$($credential.GetNetworkCredential().password)"
+}
+
+function Get-CompleteUri() {
+  [CmdletBinding()]
+  param (
+    [System.String] [parameter(Mandatory = $true)] $SensitiveInfo,
+    [System.String] [parameter(Mandatory = $true)] $Uri
+  )
+  $InsertIndex = 2
+  $Logger.info("get Complete Uri")
+  $index = $Uri.Indexof('//')
+  if (-1 -eq $index) {
+    $Logger.Error('Invalid file uri')
+    throw $(Get-i18n ERROR_INVALID_PARAMETERS)
+  }
+  $Uri = $Uri.Insert($index + $InsertIndex, "$($SensitiveInfo)@")
+  return $Uri
+}
+
+function Disable-WeakCipherSuite {
+  $Logger.info("Disable all local Cipher Suite")
+  $CipherSuitesList = Get-TlsCipherSuite
+  foreach ($CipherSuite in $CipherSuitesList) {
+    try {
+      Disable-TlsCipherSuite -Name $CipherSuite.Name
+    } catch {
+      $Logger.info("Failed to disable $($CipherSuite.Name) or it is already disabled")
+    }
+  }
+}
+
+
+function Enable-StrongCipherSuite {
+  $Logger.info("Enable secure Cipher Suite")
+  foreach ($ValidCipherSuite in $BMC.ValidCipherSuite) {
+    try {
+      Enable-TlsCipherSuite -Name $ValidCipherSuite
+    } catch {
+      $Logger.info("Failed to enable $($ValidCipherSuite.Name) or it is already enabled")
+    }
+  }
+}
+
+function Get-AccountInfo {
+  $Logger.info("GUI to get account info")
+  $credential = Get-Credential -Message $(Get-i18n MSG_ENTER_ACCOUNT)
+  # for the regular expression, please refer to powreshell escape rules
+  # rules are based on redfish api documents
+  if ((-not ($credential.username -match '^(?!#)[^<>&''"/\\%\s]{1,16}$')) -or (-not ($credential.GetNetworkCredential().password -match "^.{1,20}$"))) {
+    throw $(Get-i18n ERROR_INVALID_CHARACTER)
+  }
+  $SecondCredential = Get-Credential -Message $(Get-i18n MSG_REENTER_ACCOUNT) -UserName $credential.username
+  if ((-not ($SecondCredential.username -match '^(?!#)[^<>&''"/\\%\s]{1,16}$')) -or (-not ($SecondCredential.GetNetworkCredential().password -match "^.{1,20}$"))) {
+    throw $(Get-i18n ERROR_INVALID_CHARACTER)
+  }
+  if (($credential.username -ne $SecondCredential.username) -or ($credential.GetNetworkCredential().password -ne $SecondCredential.GetNetworkCredential().password)) {
+    throw $(Get-i18n ERROR_PASSWORD_DIFFERENT)
+  }
+  return @($($credential.username), $($credential.GetNetworkCredential().password))
 }

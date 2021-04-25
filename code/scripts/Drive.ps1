@@ -35,11 +35,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Drives = Get-iBMCDrives -Session $Session
 PS C:\> $Drives
 
-Host                          : 10.1.1.2
+Host                          : 192.168.1.1
 Id                            : HDDPlaneDisk0
 Name                          : Disk0
 Model                         : MG04ACA400N
@@ -72,7 +72,7 @@ SpareforLogicalDrives         : {}
 TemperatureCelsius            : 33
 Type                          : Disk
 
-Host                          : 10.1.1.2
+Host                          : 192.168.1.1
 Id                            : HDDPlaneDisk1
 Name                          : Disk1
 Model                         : MG04ACA400N
@@ -110,11 +110,11 @@ This example shows how to get all drives.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Drives = Get-iBMCDrives -Session $Session -StorageId RAIDStorage0
 PS C:\> $Drives
 
-Host                          : 10.1.1.2
+Host                          : 192.168.1.1
 Id                            : HDDPlaneDisk0
 Name                          : Disk0
 Model                         : MG04ACA400N
@@ -252,11 +252,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCDrivesHealth -Session $session
 PS C:\> $health | fl
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 Summary           : @{HealthRollup=OK}
 ID#HDDPlaneDisk0  : @{Health=OK; State=; Name=Disk0}
 ID#HDDPlaneDisk1  : @{Health=OK; State=; Name=Disk1}
@@ -385,7 +385,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCDrive -Session $session -DriveId HDDPlaneDisk0 -State JBOD
 
 This example shows how to set drive's state to "JBOD"
@@ -393,7 +393,7 @@ This example shows how to set drive's state to "JBOD"
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCDrive -Session $session -DriveId HDDPlaneDisk0 -LEDState Blinking
 
 This example shows how to blinking drive's led
@@ -402,7 +402,7 @@ This example shows how to blinking drive's led
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCDrive -Session $session -DriveId HDDPlaneDisk0 -HotSpareType Dedicated -VolumeId LogicalDrive0
 
 This example shows how to set drive's hot-spare type to "Dedicated" to volume "LogicalDrive0"
@@ -410,7 +410,7 @@ This example shows how to set drive's hot-spare type to "Dedicated" to volume "L
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCDrive -Session $session -DriveId HDDPlaneDisk0 -HotSpareType Global
 
 This example shows how to set drive's hot-spare type to "Global"
@@ -418,7 +418,7 @@ This example shows how to set drive's hot-spare type to "Global"
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCDrive -Session $session -DriveId HDDPlaneDisk0 -HotSpareType None
 
 This example shows how to set drive's hot-spare type to "None"

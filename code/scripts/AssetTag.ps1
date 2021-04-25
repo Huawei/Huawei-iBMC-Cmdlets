@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $AssetTag = Get-iBMCAssetTag -Session $session
 PS C:\> $AssetTag | fl
 
-Host     : 10.1.1.2
+Host     : 192.168.1.1
 AssetTag : powershell-asset-tag
 
 
@@ -65,7 +65,7 @@ Disconnect-iBMC
       $(Get-Logger).info($(Trace-Session $RedfishSession "Invoke Get iBMC Asset Tag now"))
       $Path = "/Systems/$($RedfishSession.Id)"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
-      $AssetTag = Copy-ObjectProperties $Response @('AssetTag')
+      $AssetTag = Copy-ObjectProperties $Response @('^AssetTag$')
       return $(Update-SessionAddress $RedfishSession $AssetTag)
     }
 
@@ -116,7 +116,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCAssetTag $session -AssetTag 'powershell-asset-tag'
 
 Set Asset Tag to 'powershell-asset-tag' example
@@ -124,7 +124,7 @@ Set Asset Tag to 'powershell-asset-tag' example
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCAssetTag $session -AssetTag ''
 
 Set Asset Tag to null example

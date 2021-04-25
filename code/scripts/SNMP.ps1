@@ -29,10 +29,10 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSNMPSetting -Session $session
 
-Host                : 10.1.1.2
+Host                : 192.168.1.1
 SnmpV1Enabled       : False
 SnmpV2CEnabled      : False
 SnmpV3Enabled       : True
@@ -164,7 +164,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $ReadOnlyCommunity = ConvertTo-SecureString -String "SomeP@ssw0rd1" -AsPlainText -Force
 PS C:\> $ReadWriteCommunity = ConvertTo-SecureString -String "SomeP@ssw0rd2" -AsPlainText -Force
 PS C:\> Set-iBMCSNMPSetting $session -SnmpV1Enabled $false -SnmpV2CEnabled $false `
@@ -322,27 +322,20 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSNMPTrapSetting -Session $session
 
-Host               : 10.1.1.2
+Host               : 192.168.1.1
 ServiceEnabled     : True
 TrapVersion        : V2C
 TrapV3User         : UserName
 TrapMode           : EventCode
 TrapServerIdentity : BoardSN
 AlarmSeverity      : Critical
+CommunityName      : ******
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
-
-Get-iBMCSNMPSetting
-Set-iBMCSNMPSetting
-Set-iBMCSNMPTrapSetting
-Get-iBMCSNMPTrapServer
-Set-iBMCSNMPTrapServer
-Connect-iBMC
-Disconnect-iBMC
 
 #>
 
@@ -367,8 +360,8 @@ Disconnect-iBMC
       $Path = "/Managers/$($RedfishSession.Id)/SnmpService"
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
       $Properties = @(
-        "ServiceEnabled", "TrapVersion", "TrapV3User", "TrapMode",
-        "TrapServerIdentity", "AlarmSeverity"
+        "^ServiceEnabled$", "^TrapVersion$", "^TrapV3User$", "^TrapMode$",
+        "^TrapServerIdentity$", "^AlarmSeverity$"
       )
       $TrapSettings = Copy-ObjectProperties $Response.SnmpTrapNotification $Properties
       $TrapSettings | Add-Member -MemberType NoteProperty "CommunityName" "******"
@@ -453,7 +446,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $CommunityName = ConvertTo-SecureString -String "SomeP@ssw0rd" -AsPlainText -Force
 PS C:\> Set-iBMCSNMPTrapSetting -Session $session -ServiceEnabled $true -TrapVersion V2C `
           -TrapV3User chajian -TrapMode EventCode -TrapServerIdentity BoardSN `
@@ -598,35 +591,35 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Get-iBMCSNMPTrapServer -Session $session
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MemberId          : 0
 BobEnabled        : False
 Enabled           : False
 TrapServerAddress :
 TrapServerPort    : 300
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MemberId          : 1
 BobEnabled        : False
 Enabled           : True
 TrapServerAddress : 192.168.2.8
 TrapServerPort    : 310
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MemberId          : 2
 BobEnabled        : False
 Enabled           : False
 TrapServerAddress : 192.168.2.7
 TrapServerPort    : 163
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MemberId          : 3
 BobEnabled        : True
 Enabled           : True
-TrapServerAddress : 10.10.10.2
+TrapServerAddress : 192.168.10.2
 TrapServerPort    : 202
 
 .LINK
@@ -730,7 +723,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Set-iBMCSNMPTrapServer $session -MemberId 1 -Enabled $true -TrapServerAddress 192.168.2.8 -TrapServerPort 1024
 
 

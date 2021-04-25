@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $VirtualMedia = Get-iBMCVirtualMedia $session
 PS C:\> $VirtualMedia
 
-Host           : 10.1.1.2
+Host           : 192.168.1.1
 Id             : CD
 Name           : VirtualMedia
 MediaTypes     : {}
@@ -124,14 +124,14 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> $Tasks = Connect-iBMCVirtualMedia $session 'nfs://10.10.10.10/usr/SLE-12-Server-DVD-x86_64-GM-DVD1.ISO'
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> $Tasks = Connect-iBMCVirtualMedia $session 'nfs://192.168.10.10/usr/SLE-12-Server-DVD-x86_64-GM-DVD1.ISO'
 PS C:\> $Tasks
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 1
 Name         : vmm connect task
-ActivityName : [10.1.1.2] vmm connect task
+ActivityName : [192.168.1.1] vmm connect task
 TaskState    : Completed
 StartTime    : 2018-11-14T18:04:07+08:00
 EndTime      : 2018-11-14T18:04:08+08:00
@@ -155,7 +155,11 @@ Disconnect-iBMC
 
     [string[]]
     [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
-    $ImageFilePath
+    $ImageFilePath,
+
+    [switch]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $SecureEnabled
   )
 
   begin {
@@ -165,6 +169,11 @@ Disconnect-iBMC
     Assert-ArrayNotNull $Session 'Session'
     Assert-ArrayNotNull $ImageFilePath 'ImageFilePath'
     $ImageFilePath = Get-MatchedSizeArray $Session $ImageFilePath 'Session' 'ImageFilePath'
+
+    if ($SecureEnabled) {
+      $SensitiveInfo = @(Get-SensitiveInfo)
+      $SensitiveInfoList = Get-OptionalMatchedSizeArray $Session $SensitiveInfo
+    }
 
     $Logger.info("Invoke Connect Virtual Media function")
 
@@ -190,7 +199,12 @@ Disconnect-iBMC
       $pool = New-RunspacePool $Session.Count
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
-        $Parameters = @($RedfishSession, $ImageFilePath[$idx])
+        $Path = $ImageFilePath[$idx]
+        if ($SecureEnabled) {
+          $SensitiveInfo = $SensitiveInfoList[$idx]
+          $Path = Get-CompleteUri $SensitiveInfo $Path
+        }
+        $Parameters = @($RedfishSession, $Path)
         $Logger.info($(Trace-Session $RedfishSession "Submit Connect Virtual Media task"))
         [Void] $tasks.Add($(Start-ScriptBlockThread $pool $ScriptBlock $Parameters))
       }
@@ -229,14 +243,14 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Tasks = Disconnect-iBMCVirtualMedia $session
 PS C:\> $Tasks
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 4
 Name         : vmm disconnect status task
-ActivityName : [10.1.1.2] vmm disconnect status task
+ActivityName : [192.168.1.1] vmm disconnect status task
 TaskState    : Completed
 StartTime    : 2018-11-14T18:05:20+08:00
 EndTime      : 2018-11-14T18:05:20+08:00

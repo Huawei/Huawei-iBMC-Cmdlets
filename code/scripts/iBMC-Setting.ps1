@@ -29,7 +29,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Reset-iBMC $session
 
 
@@ -111,7 +111,7 @@ In case of an error or warning, exception will be returned.
 Restore factory settings
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Restore-iBMCFactorySetting $session
 
 
@@ -188,22 +188,22 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $iBMCIP = Get-iBMCIP -Session $Session
 PS C:\> $iBMCIP
 
-Host                  : 10.1.1.2
+Host                  : 192.168.1.1
 Id                    : 04338932ede2
 Name                  : Manager Ethernet Interface
-PermanentMACAddress   : 04:33:89:32:ed:e2
+PermanentMACAddress   : xx:xx:xx:xx:xx:xx
 HostName              : server2
 FQDN                  : server2.plugin.com
 VLAN                  : @{VLANEnable=False; VLANId=0}
-IPv4Addresses         : {@{Address=10.1.1.2; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=Static}}
+IPv4Addresses         : {@{Address=192.168.1.1; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=Static}}
 IPv6Addresses         : {@{Address=fc00:10::2; PrefixLength=64; AddressOrigin=Static}, @{Address=fe80::633:89ff:fe32:ede2; PrefixLength=64; AddressOrigin=LinkLocal}}
 IPv6StaticAddresses   : {@{Address=fc00:10::2; PrefixLength=64}}
 IPv6DefaultGateway    : fc00:10::1
-NameServers           : {10.1.1.10, }
+NameServers           : {192.168.1.10, }
 IPVersion             : IPv4AndIPv6
 NetworkPortMode       : Fixed
 ManagementNetworkPort : @{Type=Dedicated; PortNumber=1}
@@ -213,38 +213,38 @@ This example shows how to query the IP of a server
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2-3 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1-3 -Credential $Credential -TrustCert
 PS C:\> $iBMCIP = Get-iBMCIP -Session $Session
 PS C:\> $iBMCIP
 
-Host                  : 10.1.1.2
+Host                  : 192.168.1.1
 Id                    : 04338932ede2
 Name                  : Manager Ethernet Interface
-PermanentMACAddress   : 04:33:89:32:ed:e2
+PermanentMACAddress   : xx:xx:xx:xx:xx:xx
 HostName              : server2
 FQDN                  : server2.plugin.com
 VLAN                  : @{VLANEnable=False; VLANId=0}
-IPv4Addresses         : {@{Address=10.1.1.2; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=Static}}
+IPv4Addresses         : {@{Address=192.168.1.1; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=Static}}
 IPv6Addresses         : {@{Address=fc00:10::2; PrefixLength=64; AddressOrigin=Static}, @{Address=fe80::633:89ff:fe32:ede2; PrefixLength=64; AddressOrigin=LinkLocal}}
 IPv6StaticAddresses   : {@{Address=fc00:10::2; PrefixLength=64}}
 IPv6DefaultGateway    : fc00:10::1
-NameServers           : {10.1.1.10, }
+NameServers           : {192.168.1.10, }
 IPVersion             : IPv4AndIPv6
 NetworkPortMode       : Fixed
 ManagementNetworkPort : @{Type=Dedicated; PortNumber=1}
 
-Host                  : 10.1.1.3
+Host                  : 192.168.1.3
 Id                    : 04885fd4c9d6
 Name                  : Manager Ethernet Interface
-PermanentMACAddress   : 04:88:5f:d4:c9:d6
+PermanentMACAddress   : xx:xx:xx:xx:xx:xx
 HostName              : server3
 FQDN                  : server3.plugin.com
 VLAN                  : @{VLANEnable=False; VLANId=0}
-IPv4Addresses         : {@{Address=10.1.1.3; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=Static}}
+IPv4Addresses         : {@{Address=192.168.1.3; SubnetMask=255.255.0.0; Gateway=10.1.0.1; AddressOrigin=Static}}
 IPv6Addresses         : {@{Address=fc00:10::3; PrefixLength=64; AddressOrigin=Static}, @{Address=fe80::633:89ff:fe32:ede3; PrefixLength=64; AddressOrigin=LinkLocal}}
 IPv6StaticAddresses   : {@{Address=fc00:10::3; PrefixLength=64}}
 IPv6DefaultGateway    : fc00:10::1
-NameServers           : {10.1.1.10, }
+NameServers           : {192.168.1.10, }
 IPVersion             : IPv4AndIPv6
 NetworkPortMode       : Fixed
 ManagementNetworkPort : @{Type=Dedicated; PortNumber=1}
@@ -282,17 +282,17 @@ Disconnect-iBMC
       $Response = Invoke-RedfishRequest $RedfishSession $Path | ConvertFrom-WebResponse
       
       $Properties = @(
-        "Id", 
-        "Name", 
-        "PermanentMACAddress", 
-        "HostName", 
-        "FQDN", 
-        "VLAN", 
-        "IPv4Addresses", 
-        "IPv6Addresses",
-        "IPv6StaticAddresses",
-        "IPv6DefaultGateway",
-        "NameServers"
+        "^Id$",
+        "^Name$",
+        "^PermanentMACAddress$",
+        "^HostName$",
+        "^FQDN$",
+        "^VLAN$",
+        "^IPv4Addresses$",
+        "^IPv6Addresses$",
+        "^IPv6StaticAddresses$",
+        "^IPv6DefaultGateway$",
+        "^NameServers$"
         )
       $iBMCIP = Copy-ObjectProperties $Response $Properties
       $iBMCIP | Add-Member -MemberType NoteProperty "IPVersion" $Response.Oem.Huawei.IPVersion
@@ -373,9 +373,9 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> Set-iBMCIP -Session $Session -IPVersion IPv4AndIPv6 `
-          -IPv4Address 10.1.1.2 -IPv4SubnetMask 255.255.0.0 -IPv4Gateway 10.1.0.1 -IPv4AddressOrigin Static `
+          -IPv4Address 192.168.1.1 -IPv4SubnetMask 255.255.0.0 -IPv4Gateway 10.1.0.1 -IPv4AddressOrigin Static `
           -IPv6Address fc00:10:2 -IPv6PrefixLength 64 -IPv6Gateway fc00:10:1 -IPv6AddressOrigin Static
 
 This example shows how to modify the IP of a server
@@ -383,9 +383,9 @@ This example shows how to modify the IP of a server
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2,10.1.1.3 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1,192.168.1.3 -Credential $Credential -TrustCert
 PS C:\> $IPVersion = @("IPv4AndIPv6", "IPv4")
-PS C:\> $IPv4Address = @("10.1.1.12", "10.1.1.13")
+PS C:\> $IPv4Address = @("192.168.1.12", "192.168.1.13")
 PS C:\> $IPv6Address = @("fc00:10::12", "fc00:10:13")
 PS C:\> Set-iBMCIP -Session $Session -IPVersion $IPVersion `
           -IPv4Address $IPv4Address -IPv4SubnetMask 255.255.0.0 -IPv4Gateway 10.1.0.1 -IPv4AddressOrigin Static `

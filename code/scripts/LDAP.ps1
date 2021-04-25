@@ -34,18 +34,18 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $Result = Get-iBMCLDAP -Session $Session
 PS C:\> $Result | fl
 
-Host                           : 10.1.1.2
+Host                           : 192.168.1.1
 Id                             : LdapService
 Name                           : Ldap Service
 LdapServiceEnabled             : True
 
 Id                             : 1
 Name                           : Ldap Controller
-LdapServerAddress              : 10.1.1.10
+LdapServerAddress              : 192.168.1.10
 LdapPort                       : 666
 UserDomain                     : CN,DC=DD
 BindDN                         : 
@@ -108,11 +108,11 @@ This example shows how to query the LDAP information of multiple server
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $LDAPID = 1
 PS C:\> Get-iBMCLDAP -Session $Session -LDAPID $LDAPID
 
-Host                           : 10.1.1.2
+Host                           : 192.168.1.1
 Id                             : 1
 Name                           : Ldap Controller
 LdapServerAddress              : 
@@ -258,11 +258,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $Result = Set-iBMCLDAPServiceEnabled -Session $Session -LdapServiceEnabled $true
 PS C:\> $Result
 
-Host               : 10.1.1.2
+Host               : 192.168.1.1
 Id                 : LdapService
 Name               : Ldap Service
 LdapServiceEnabled : true
@@ -366,11 +366,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $Result = Import-iBMCLDAPCert -Session $Session -LDAPID 1 -LDAPCertPath 'c:\ca.cer'
 PS C:\> $Result
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MessageId         : iBMC.1.0.LDAPCertImportSuccess
 RelatedProperties : 
 Message           : The LDAP certificate is imported successfully.
@@ -383,14 +383,14 @@ This example shows how to import LDAP certificate from local file
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
-PS C:\> $Result = Import-iBMCLDAPCert -Session $Session -LDAPID 1 -LDAPCertPath "nfs://10.1.1.100/data/ldap.cer"
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
+PS C:\> $Result = Import-iBMCLDAPCert -Session $Session -LDAPID 1 -LDAPCertPath "nfs://192.168.1.100/data/ldap.cer"
 PS C:\> $Result
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 1
 Name         : ldap root cert import
-ActivityName : [10.1.1.2] ldap root cert import
+ActivityName : [192.168.1.1] ldap root cert import
 TaskState    : Completed
 StartTime    : 2019-11-28T16:44:46+08:00
 EndTime      : 2019-11-28T16:44:47+08:00
@@ -402,13 +402,13 @@ This example shows how to import LDAP certificate from remote file
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $LocalFilePath = 'c:\ca.cer'
 PS C:\> $Upload = Invoke-iBMCFileUpload -Session $Session -FileUri $LocalFilePath
 PS C:\> $Result = Import-iBMCLDAPCert -Session $session -LDAPID 1 -LDAPCertPath $Upload.Path
 PS C:\> $Result
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MessageId         : iBMC.1.0.LDAPCertImportSuccess
 RelatedProperties : 
 Message           : The LDAP certificate is imported successfully.
@@ -422,13 +422,13 @@ This example shows how to upload local file to BMC and then import LDAP certific
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2-3 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1-3 -Credential $Credential -TrustCert
 PS C:\> $LDAPID = @(1, 2)
-PS C:\> $LDAPCertPath = @("c:\ldap.cer", "nfs://10.1.1.100/data/ldap.cer")
+PS C:\> $LDAPCertPath = @("c:\ldap.cer", "nfs://192.168.1.100/data/ldap.cer")
 PS C:\> $Result = Import-iBMCLDAPCert -Session $Session -LDAPID $LDAPID -LDAPCertPath $LDAPCertPath
 PS C:\> $Result
 
-Host              : 10.1.1.2
+Host              : 192.168.1.1
 MessageId         : iBMC.1.0.LDAPCertImportSuccess
 RelatedProperties : 
 Message           : The LDAP certificate is imported successfully.
@@ -436,10 +436,10 @@ MessageArgs       :
 Severity          : OK
 Resolution        : None
 
-Host         : 10.1.1.3
+Host         : 192.168.1.3
 Id           : 2
 Name         : ldap root cert import
-ActivityName : [10.1.1.3] ldap root cert import
+ActivityName : [192.168.1.3] ldap root cert import
 TaskState    : Completed
 StartTime    : 2019-11-29T00:38:07+08:00
 EndTime      : 2019-11-29T00:38:08+08:00
@@ -447,6 +447,35 @@ TaskStatus   : OK
 TaskPercent  : 100%
 
 This example shows how to import LDAP certificate to different servers
+
+.EXAMPLE
+
+PS C:\> $Credential = Get-Credential
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1-2 -Credential $Credential -TrustCert
+PS C:\> $LDAPID = @(1, 2)
+PS C:\> $LDAPCertPath = @("c:\ldap.cer", "sftp://192.168.1.3/data/ldap.cer")
+PS C:\> $Result = Import-iBMCLDAPCert -Session $Session -LDAPID $LDAPID -LDAPCertPath $LDAPCertPath -SecureEnabled
+PS C:\> $Result
+
+Host              : 192.168.1.1
+MessageId         : iBMC.1.0.LDAPCertImportSuccess
+RelatedProperties : 
+Message           : The LDAP certificate is imported successfully.
+MessageArgs       : 
+Severity          : OK
+Resolution        : None
+
+Host         : 192.168.1.2
+Id           : 2
+Name         : ldap root cert import
+ActivityName : [192.168.1.3] ldap root cert import
+TaskState    : Completed
+StartTime    : 2019-11-29T00:38:07+08:00
+EndTime      : 2019-11-29T00:38:08+08:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+This example shows how to import LDAP certificate to different servers with secure parameter
 
 
 .LINK
@@ -472,7 +501,11 @@ Disconnect-iBMC
 
     [string[]]
     [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 2)]
-    $LDAPCertPath
+    $LDAPCertPath,
+
+    [switch]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $SecureEnabled
   )
 
   begin {
@@ -484,6 +517,11 @@ Disconnect-iBMC
     Assert-ArrayNotNull $LDAPCertPath 'LDAPCertPath'
     $LDAPIDList = Get-MatchedSizeArray $Session $LDAPID 'Session' 'LDAPID'
     $LDAPCertPathList = Get-MatchedSizeArray $Session $LDAPCertPath 'Session' 'LDAPCertPath'
+
+    if ($SecureEnabled) {
+      $SensitiveInfo = @(Get-SensitiveInfo)
+      $SensitiveInfoList = Get-OptionalMatchedSizeArray $Session $SensitiveInfo
+    }
 
     $Logger.info("Invoke Import LDAP certificates function, batch size: $($Session.Count)")
 
@@ -527,6 +565,10 @@ Disconnect-iBMC
         $RedfishSession = $Session[$idx]
         $CertificateFilePath = $LDAPCertPathList[$idx]
         $_LDAPID = $LDAPIDList[$idx]
+        if ($SecureEnabled) {
+          $SensitiveInfo = $SensitiveInfoList[$idx]
+          $CertificateFilePath = Get-CompleteUri $SensitiveInfo $CertificateFilePath
+        }
         $Logger.info($(Trace-Session $RedfishSession "Submit import LDAP certificate task"))
         $Parameters = @($RedfishSession, $_LDAPID, $CertificateFilePath)
 
@@ -534,8 +576,15 @@ Disconnect-iBMC
           [Void] $LocalTasks.Add($(Start-ScriptBlockThread $pool $ImportLDAPCertBlock $Parameters))
         }
         else{
-          $CertFileUri = New-Object System.Uri($CertificateFilePath)
-          if ($CertFileUri.Scheme -notin $BMC.LDAPCertRemoteImportSupportSchema) {
+          $Schema = ""
+          try {
+            $CertFileUri = New-Object System.Uri($CertificateFilePath)
+            $Schema = $CertFileUri.Scheme
+          } catch {
+            $Logger.info("LDAP cert file path can not convert into system uri")
+            $Schema = $CertificateFilePath.Substring(0, $CertificateFilePath.IndexOf("://"))
+          }
+          if ($Schema -notin $BMC.LDAPCertRemoteImportSupportSchema) {
             [Void] $LocalTasks.Add($(Start-ScriptBlockThread $pool $ImportLDAPCertBlock $Parameters))
           }
           else {
@@ -543,7 +592,6 @@ Disconnect-iBMC
             [Void] $RemoteTasks.Add($(Start-ScriptBlockThread $pool $ImportLDAPCertBlock $Parameters))
           }
         }
-        
       }
       # Get local import result
       if ($LocalTasks.Count -gt 0) {
@@ -674,7 +722,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $Credential = Get-Credential
-PS C:\> $Session = Connect-iBMC -Address 10.1.1.2 -Credential $Credential -TrustCert
+PS C:\> $Session = Connect-iBMC -Address 192.168.1.1 -Credential $Credential -TrustCert
 PS C:\> $BindPwd = ConvertTo-SecureString -String bind-password -AsPlainText -Force
 PS C:\> $GroupLoginRule = ,@("Rule1", "Rule2", "Rule3")
 PS C:\> $GroupLoginInterface = ,@("Web","SSH","Redfish")

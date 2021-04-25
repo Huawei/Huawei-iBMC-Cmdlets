@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $MemoriesArray = Get-iBMCMemory -Session $session
 PS C:\> $MemoriesArray
 
-Host                : 10.1.1.2
+Host                : 192.168.1.1
 Id                  : mainboardDIMM000
 CapacityMiB         : 16384
 Manufacturer        : Samsung
@@ -54,7 +54,7 @@ Technology          : Synchronous| Registered (Buffered)
 Position            : mainboard
 Status              : @{Health=OK; State=Enabled}
 
-Host                : 10.1.1.2
+Host                : 192.168.1.1
 Id                  : mainboardDIMM001
 CapacityMiB         : 16384
 Manufacturer        : Samsung
@@ -197,11 +197,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCMemoryHealth -Session $session
 PS C:\> $health | fl
 
-Host                : 10.1.1.2
+Host                : 192.168.1.1
 Summary             : @{HealthRollup=OK}
 ID#mainboardDIMM000 : @{Health=OK; State=Enabled; DeviceLocator=DIMM000}
 ID#mainboardDIMM010 : @{Health=OK; State=Enabled; DeviceLocator=DIMM010}

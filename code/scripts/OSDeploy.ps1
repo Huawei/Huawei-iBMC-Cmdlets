@@ -32,7 +32,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $DeployConfig = Get-ibmcOSDeployConfig $session
 PS C:\> $DeployConfig
 
@@ -96,7 +96,6 @@ Disconnect-iBMC
         return $(Update-SessionAddress $RedfishSession $DeployConfig)
       }
       else {
-        # DTS2019122405434 20200410 Prompt information is inaccurate
         # raise an exception if no data
         throw $(Get-i18n "FAIL_SP_DEPLOY_NO_DATA")
       }
@@ -181,12 +180,12 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $ConfigFileURI = 'C:\ibmc-os-deploy-config-centos.json'
 PS C:\> $DeployConfig = Set-ibmcOSDeployConfig -Session $session -ConfigFileURI
 PS C:\> $DeployConfig
 
-Host          : 10.1.1.2
+Host          : 192.168.1.1
 Id            : 1
 Name          : SP OS Install Parameter
 InstallMode   : Recommended
@@ -212,13 +211,13 @@ this example shows how to update the OS deploy config
 
 # update iBMC OS deploy configuration
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $ConfigFileURI = 'C:\ibmc-os-deploy-config-centos.json'
 PS C:\> Set-iBMCOSDeployConfig -Session $session -ConfigFileURI
 
 # connect virtual media to a CentOS 7.3 image
 PS C:\> Disconnect-iBMCVirtualMedia $session
-PS C:\> $OSImageFileURI = 'nfs://10.10.10.3/CentOS-7-x86_64-Minimal-1611.iso'
+PS C:\> $OSImageFileURI = 'nfs://192.168.10.3/CentOS-7-x86_64-Minimal-1611.iso'
 PS C:\> Connect-iBMCVirtualMedia $session -ImageFilePath $OSImageFileURI
 
 # Enable Smart Provisioning service

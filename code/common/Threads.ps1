@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Huawei Technologies Co., Ltd. All rights reserved.	
+# Copyright (C) 2020-2021 Huawei Technologies Co., Ltd. All rights reserved.	
 # This program is free software; you can redistribute it and/or modify 
 # it under the terms of the MIT License		
 
@@ -198,9 +198,9 @@ function Get-AsyncTaskResults {
       # waiting for powershell invoke finished and return result
       $Result = $AsyncTask.PowerShell.EndInvoke($AsyncTask.AsyncResult)
       if ($AsyncTask.PowerShell.Streams.Error) {
-        $Error = $AsyncTask.PowerShell.Streams.Error[0]
+        $TaskError = $AsyncTask.PowerShell.Streams.Error[0]
         # $Logger.Warn($AsyncTask.PowerShell.Streams.Error)
-        $Logger.Warn("$Error`n$($Error.InvocationInfo.PositionMessage)`n$($Error.ScriptStackTrace)")
+        $Logger.Warn("$TaskError`n$($TaskError.InvocationInfo.PositionMessage)`n$($Error.ScriptStackTrace)")
         [Void] $results.add($AsyncTask.PowerShell.Streams.Error)
       } else {
         if ($Result.Count -eq 1) {

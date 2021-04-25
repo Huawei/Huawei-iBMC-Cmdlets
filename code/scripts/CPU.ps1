@@ -29,11 +29,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $ProcessorsArray = Get-iBMCProcessors -Session $session
 PS C:\> $ProcessorsArray
 
-Host                    : 10.1.1.2
+Host                    : 192.168.1.1
 Id                      : 1
 ProcessorType           : CPU
 ProcessorArchitecture   : x86
@@ -57,7 +57,7 @@ FrequencyMHz            : 2100
 OtherParameters         : 64-bit Capable| Multi-Core| Hardware Thread| Execute Protection| Enhanced Virtualization| Power/Performance Control
 Status                  : @{State=Enabled; Health=Warning}
 
-Host                    : 10.1.1.2
+Host                    : 192.168.1.1
 Id                      : 2
 ProcessorType           : CPU
 ProcessorArchitecture   : x86
@@ -204,11 +204,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCProcessorsHealth -Session $session
 PS C:\> $health | fl
 
-Host    : 10.1.1.2
+Host    : 192.168.1.1
 Summary : @{HealthRollup=OK}
 ID#1    : @{Health=OK; State=Enabled; DeviceLocator=CPU1}
 ID#2    : @{Health=OK; State=Enabled; DeviceLocator=CPU2}

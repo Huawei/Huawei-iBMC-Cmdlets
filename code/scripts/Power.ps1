@@ -30,10 +30,10 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> Get-iBMCPowerInfo -Session $session
 
-Host                 : 10.1.1.2
+Host                 : 192.168.1.1
 Id                   : 0
 Name                 : System Power Control 1
 PowerConsumedWatts   : 222 Watts
@@ -129,11 +129,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $PowerSuppliesArray = Get-iBMCPowerSupplies -Session $session
 PS C:\> $PowerSuppliesArray
 
-Host               : 10.1.1.2
+Host               : 192.168.1.1
 FirmwareVersion    : DC:108 PFC:107
 LineInputVoltage   : 0
 Manufacturer       : LITEON
@@ -156,7 +156,7 @@ PowerInputWatts    : 0
 PowerOutputWatts   : 0
 Protocol           : PSU
 
-Host               : 10.1.1.2
+Host               : 192.168.1.1
 FirmwareVersion    : DC:108 PFC:107
 LineInputVoltage   : 225
 Manufacturer       : LITEON
@@ -258,11 +258,11 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $health = Get-iBMCPowerSuppliesHealth -Session $session
 PS C:\> $health | fl
 
-Host       : 10.1.1.2
+Host       : 192.168.1.1
 Summary    : @{HealthRollup=Critical}
 MemberId#0 : @{Health=OK; State=Enabled; Name=PS1}
 MemberId#1 : @{Health=Critical; State=Enabled; Name=PS2}

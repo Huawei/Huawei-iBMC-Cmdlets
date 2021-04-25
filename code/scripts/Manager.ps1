@@ -38,15 +38,15 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
-PS C:\> $ExportTo = "nfs://10.10.10.3/data/nfs/collect.tar.gz"
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> $ExportTo = "nfs://192.168.10.3/data/nfs/collect.tar.gz"
 PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
 PS C:\> $Tasks
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 1
 Name         : Export Dump File Task
-ActivityName : [10.1.1.2] Export Dump File Task
+ActivityName : [192.168.1.1] Export Dump File Task
 TaskState    : Completed
 StartTime    : 2019-01-19T04:22:13+00:00
 EndTime      : 2019-01-19T04:30:19+00:00
@@ -58,25 +58,45 @@ This example shows how to export collect tarball file to NFS.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2,10.1.1.3 -Credential $credential -TrustCert
-PS C:\> $ExportTo = @("nfs://10.10.10.3/data/nfs/2.tar.gz", "nfs://10.10.10.3/data/nfs/3.tar.gz")
-PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
+PS C:\> $ExportTo = "sftp://192.168.1.2/data/collect.tar.gz"
+PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo -SecureEnabled
 PS C:\> $Tasks
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 1
 Name         : Export Dump File Task
-ActivityName : [10.1.1.2] Export Dump File Task
+ActivityName : [192.168.1.1] Export Dump File Task
 TaskState    : Completed
 StartTime    : 2019-01-19T04:22:13+00:00
 EndTime      : 2019-01-19T04:30:19+00:00
 TaskStatus   : OK
 TaskPercent  : 100%
 
-Host         : 10.1.1.3
+This example shows how to export collect tarball file to sftp with secure parameter.
+
+.EXAMPLE
+
+PS C:\> $credential = Get-Credential
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1,192.168.1.3 -Credential $credential -TrustCert
+PS C:\> $ExportTo = @("nfs://192.168.10.3/data/nfs/2.tar.gz", "nfs://192.168.10.3/data/nfs/3.tar.gz")
+PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
+PS C:\> $Tasks
+
+Host         : 192.168.1.1
 Id           : 1
 Name         : Export Dump File Task
-ActivityName : [10.1.1.3] Export Dump File Task
+ActivityName : [192.168.1.1] Export Dump File Task
+TaskState    : Completed
+StartTime    : 2019-01-19T04:22:13+00:00
+EndTime      : 2019-01-19T04:30:19+00:00
+TaskStatus   : OK
+TaskPercent  : 100%
+
+Host         : 192.168.1.3
+Id           : 1
+Name         : Export Dump File Task
+ActivityName : [192.168.1.3] Export Dump File Task
 TaskState    : Completed
 StartTime    : 2019-01-19T04:22:13+00:00
 EndTime      : 2019-01-19T04:30:19+00:00
@@ -88,15 +108,15 @@ This example shows how to export collect tarball file to NFS for multiply server
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $ExportTo = "/tmp/collect.tar.gz"
 PS C:\> $Tasks = Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
 PS C:\> $Tasks
 
-Host         : 10.1.1.2
+Host         : 192.168.1.1
 Id           : 1
 Name         : Export Dump File Task
-ActivityName : [10.1.1.2] Export Dump File Task
+ActivityName : [192.168.1.1] Export Dump File Task
 TaskState    : Completed
 StartTime    : 2019-01-19T04:22:13+00:00
 EndTime      : 2019-01-19T04:30:19+00:00
@@ -108,7 +128,7 @@ This example shows how to export collect tarball file to BMC temp storage.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $ExportTo = "/tmp/collect.tar.gz"
 PS C:\> Export-iBMCMaintenanceInfo -Session $session -ExportTo $ExportTo
 PS C:\> $LocalFilePath = 'C:\collect.tar.gz'
@@ -117,7 +137,6 @@ PS C:\> Invoke-iBMCFileDownload -Session $session `
 
 This example shows how to export collect tarball file to BMC temp storage
   and then download the tarball file to local machine.
-
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
@@ -133,7 +152,11 @@ Disconnect-iBMC
 
     [String[]]
     [parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
-    $ExportTo
+    $ExportTo,
+
+    [switch]
+    [parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+    $SecureEnabled
   )
 
   begin {
@@ -145,6 +168,11 @@ Disconnect-iBMC
 
     $ExportToList = Get-MatchedSizeArray $Session $ExportTo
 
+    if ($SecureEnabled) {
+      $SensitiveInfo = @(Get-SensitiveInfo)
+      $SensitiveInfoList = Get-OptionalMatchedSizeArray $Session $SensitiveInfo
+    }
+    
     if ($ExportTo.Count -eq 1 -and $Session.Count -gt 1) {
       if ($ExportTo[0] -notlike '/tmp/*') {
         throw $(Get-i18n ERROR_EXPORT_TO_SAME_NFS)
@@ -177,7 +205,10 @@ Disconnect-iBMC
       for ($idx = 0; $idx -lt $Session.Count; $idx++) {
         $RedfishSession = $Session[$idx]
         $Path = $ExportToList[$idx]
-
+        if ($SecureEnabled) {
+          $SensitiveInfo = $SensitiveInfoList[$idx]
+          $Path = Get-CompleteUri $SensitiveInfo $Path
+        }
         # validate network file schema
         Assert-NetworkUriInSchema $RedfishSession $Path $BMC.CollectFileSupportSchema | Out-Null
         $Parameters = @($RedfishSession, $Path)
@@ -244,7 +275,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $Path = Invoke-iBMCFileUpload -Session $session -FileUri E:\2288H_V5_5288_V5-iBMC-V318.hpm
 PS C:\> $Path
 
@@ -368,7 +399,7 @@ In case of an error or warning, exception will be returned.
 .EXAMPLE
 
 PS C:\> $credential = Get-Credential
-PS C:\> $session = Connect-iBMC -Address 10.1.1.2 -Credential $credential -TrustCert
+PS C:\> $session = Connect-iBMC -Address 192.168.1.1 -Credential $credential -TrustCert
 PS C:\> $BMCFilePath = "/tmp/web/2288H_V5_5288_V5-iBMC-V318.hpm"
 PS C:\> $LocalFilePath = "E:\2288H_V5_5288_V5-iBMC-V318.hpm"
 PS C:\> Invoke-iBMCFileDownload -Session $session `
@@ -377,10 +408,6 @@ PS C:\> Invoke-iBMCFileDownload -Session $session `
 
 .LINK
 https://github.com/Huawei/Huawei-iBMC-Cmdlets
-
-Invoke-iBMCFileUpload
-Connect-iBMC
-Disconnect-iBMC
 
 #>
   [CmdletBinding()]
@@ -415,8 +442,6 @@ Disconnect-iBMC
       param($RedfishSession, $BMCFilePath, $LocalFilePath)
 
       $Logger.info($(Trace-Session $RedfishSession "Invoke download BMC file now"))
-
-      # $FileUri = New-Object System.Uri($BMCFilePath)
 
       $Payload = @{
         TransferProtocol = "HTTPS";
