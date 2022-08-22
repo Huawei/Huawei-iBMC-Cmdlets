@@ -6,10 +6,15 @@ Huawei iBMC cmdlets provide powershell Cmdlets to manage iBMC using Redfish API.
 These cmdlets contains the most commonly used features such as: information query, RAID configuration, OS deploy, firmware upgrade.
 
 ## Supported Device
-
-Huawei Blade Server:        RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5
-Huawei Rack Server:         CH121 V3, CH242 V3
-Huawei High-density Server: XH622 V3, XH321 V5
+    X86 Architecture:
+        Huawei Blade Server:        RH1288 V3, RH2288 V3, RH2288H V3, 1288H V5, 2288H V5, 2288 V5, 2488H V5, 1288H V6, 2288H V6, 5288 V6, 2488H V6
+        Huawei Rack Server:         CH121 V3, CH242 V3
+        Huawei High-density Server: XH622 V3, XH321 V5
+        
+    ARM Architecture:
+    	TaiShan 200 server (model 2180, 2280 VE, 5280 VE) 
+    	TaiShan 200Pro server (model 2480 Pro, 2280 Pro) 
+    
 
 ## Requirements
 
