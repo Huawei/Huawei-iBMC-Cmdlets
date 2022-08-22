@@ -33,13 +33,13 @@ These cmdlets contains the most commonly used features such as: information quer
   ```
 - Local installation
 
-  1、Decompress the Huawei-iBMC-Cmdlets v1.3.3.zip software packages to obtaion the Huawei-iBMC-Cmdlets folder
-  2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory  
-  3、Run the following command to install Huawei-iBMC-Cmdlets:  
+      1、Decompress the Huawei-iBMC-Cmdlets v1.3.3.zip software packages to obtaion the Huawei-iBMC-Cmdlets folder
+      2、Copy the Huawei-iBMC-Cmdlets folder to the PowerShell installation directory  
+      3、Run the following command to install Huawei-iBMC-Cmdlets:  
   
-  ```powershell
-  Import-Module -Name Huawei-iBMC-Cmdlets -Force
-  ```
+      ```powershell
+      Import-Module -Name Huawei-iBMC-Cmdlets -Force
+      ```
 
 ## Usage
 
